@@ -1,0 +1,27 @@
+{
+  "paths": {
+
+    "core": {
+      "src": "src/back/",
+      "dest": "dist/lib/back4app-rest/"
+    },
+
+    "build": {
+      "tmpDir": ".tmp-build/"
+    },
+
+    "lintCheckFiles": [
+      "src/**/*.js",
+      "tests/**/*.js",
+      "!node_modules/",
+      "!coverage/"
+    ],
+    "mochaSrc": [
+      "tests/unit/**/*.test.js"
+    ],
+    "backDocsSrc": "./src/back",
+    "backDocsDist": "./dist/docs/back",
+    "guideDocsSrc": "./docs/guide",
+    "guideDocsDist": "./dist/docs/guide"
+  }
+}

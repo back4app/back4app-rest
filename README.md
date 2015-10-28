@@ -2,8 +2,8 @@ back4app rest
 =======================
 
 [![Build Status](
-    http://jenkins.back4app.com:8080/buildStatus/icon?job=back4app-entity-api%20-%20master)](
-    http://jenkins.back4app.com:8080/job/back4app-entity-api%20-%20master/)
+    http://jenkins.back4app.com:8080/buildStatus/icon?job=back4app-rest%20-%20master)](
+    http://jenkins.back4app.com:8080/job/back4app-rest%20-%20master/)
 
 ## Table of contents
 

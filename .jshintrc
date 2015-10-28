@@ -1,0 +1,32 @@
+{
+  "bitwise": true,
+  "camelcase": true,
+  "curly": true,
+  "eqeqeq": true,
+  "latedef": false,
+  "noarg": true,
+  "nocomma": true,
+  "nonbsp": true,
+  "node": true,
+  "nonew": true,
+  "strict": true,
+  "undef": true,
+  "unused": true,
+  "validthis": true,
+
+  "globals": {
+    "$": false,
+    "window": false,
+    "document": false,
+    "global": false,
+    "alert": false,
+
+    // global for tests
+    "it": false,
+    "beforeEach": false,
+    "describe": false,
+    "before": false,
+    "after": false,
+    "context": false
+  }
+}
