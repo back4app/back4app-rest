@@ -1,0 +1,40 @@
+{
+  "name": "@back4app/back4app-rest",
+  "version": "1.0.0",
+  "description": "back{4}app rest api",
+  "main": "index.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/back4app/back4app-rest.git"
+  },
+  "keywords": [
+    "back{4}app",
+    "entity",
+    "rest",
+    "api"
+  ],
+  "author": "BACK4APP SERVICOS DIGITAIS LTDA",
+  "license": "Unlicense",
+  "bugs": {
+    "url": "https://github.com/back4app/back4app-rest/issues"
+  },
+  "homepage": "https://github.com/back4app/back4app-rest#readme",
+  "devDependencies": {
+    "chai": "^3.3.0",
+    "gulp": "^3.9.0",
+    "gulp-jscs": "^2.0.0",
+    "gulp-jscs-stylish": "^1.2.1",
+    "gulp-jshint": "^1.11.2",
+    "gulp-mocha": "^2.1.3",
+    "jsdoc": "^3.3.2",
+    "jshint-stylish": "^2.0.1",
+    "mocha": "^2.3.3"
+  },
+  "dependencies": {
+    "@back4app/back4app-entity": "^1.0.4",
+    "express": "^4.13.3"
+  }
+}
