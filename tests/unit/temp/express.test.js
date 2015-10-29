@@ -110,6 +110,11 @@ describe('express REST', function () {
         res.json(testModel);
       });
 
+    app.use (function (error, req, res, next){
+      console.log(error);
+      done();
+    });
+
     var postData = JSON.stringify({
       'name': 'Sherlock Holmes',
       'job': 'Consultant'
