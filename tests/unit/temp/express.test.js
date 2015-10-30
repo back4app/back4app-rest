@@ -37,6 +37,83 @@ describe('express', function () {
     });
 });
 
+describe.skip('authentication', function () {
+  var router;
+  var testModel;
+  var testArray;
+  var server;
+  var id;
+  before(function (done) {
+    testArray = [];
+    id = 0;
+    //app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(bodyParser.json());
+    router = express.Router();
+    router.get('/', function(req, res) {
+      //res.json({ message: 'api working' });
+      res.status(200).send('api working');
+    });
+    app.use('/auth', router);
+    server = app.listen(3000, function () {
+      var port = server.address().port;
+      expect(port).to.equal(3000);
+      done();
+    });
+  });
+
+  after(function () {
+    server.close();
+  });
+
+  it('should add POST route to /auth', function (done) {
+    router.route('/test')
+      .post(function(req, res) {
+        testModel = {};
+        testModel.id = id++;
+        testModel.name = req.body.name;
+        testModel.job = req.body.job;
+        testModel.serverInfo = 'Arthur Conan Doyle';
+        testArray.push(testModel);
+        res.json(testModel);
+      });
+
+    app.use (function (error){
+      console.log(error);
+      done();
+    });
+
+    var postData = JSON.stringify({
+      'name': 'Sherlock Holmes',
+      'job': 'Consultant'
+    });
+
+    var req = http.request({
+      host: 'localhost',
+      port: '3000',
+      path: '/api/test',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': postData.length
+      }
+    }, function (response) {
+      expect(response.statusCode).to.equal(200);
+      var body = '';
+      response.on('data', function (d) { body += d; });
+      response.on('end', function () {
+        var responseObj = JSON.parse(body);
+        expect(responseObj.id).to.equal(1);
+        expect(responseObj.name).to.equal('Sherlock Holmes');
+        expect(responseObj.job).to.equal('Consultant');
+        expect(responseObj.serverInfo).to.equal('Arthur Conan Doyle');
+        done();
+      });
+    });
+    req.write(postData);
+    req.end();
+  });
+});
+
 describe('express REST', function () {
   var router;
   var testModel;
@@ -148,7 +225,7 @@ describe('express REST', function () {
 
   it('should add PUT route to /api/test (CRUD - Update)', function (done) {
     router.route('/test/:char_id')
-      .put(function(req, res) {
+      .put(function (req, res) {
         testModel = null;
         var key;
         for(var i in testArray) {
@@ -196,7 +273,7 @@ describe('express REST', function () {
 
   it('should add DELETE route to /api/test (CRUD - Delete)', function (done) {
     router.route('/test/:char_id')
-      .delete(function(req, res) {
+      .delete(function (req, res) {
         testModel = null;
         var key;
         for(var i in testArray) {
@@ -208,7 +285,7 @@ describe('express REST', function () {
         expect(testModel).to.be.an('object');
         //delete testArray[key];
         testArray.splice(key);
-        res.json(testArray);
+        res.json(testArray); //array returned just to test
       });
 
     var req = http.request({
