@@ -55,7 +55,7 @@ describe('express REST', function () {
     });
     app.use('/api', router);
     app.use(function (error) {
-      console.log("Error Handler called");
+      console.log('Error Handler called', error);
     });
     server = app.listen(3000, function () {
       var port = server.address().port;
