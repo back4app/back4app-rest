@@ -54,6 +54,9 @@ describe('express REST', function () {
       res.status(200).send('api working');
     });
     app.use('/api', router);
+    app.use(function (error) {
+      console.log("Error Handler called");
+    });
     server = app.listen(3000, function () {
       var port = server.address().port;
       expect(port).to.equal(3000);
@@ -109,11 +112,6 @@ describe('express REST', function () {
         testArray.push(testModel);
         res.json(testModel);
       });
-
-    app.use(function (error) {
-      console.log(error);
-      done();
-    });
 
     var postData = JSON.stringify({
       'name': 'Sherlock Holmes',
@@ -234,14 +232,11 @@ describe('express REST', function () {
     req.end();
   });
 
-});
 
-describe('express GET entity', function () {
-  var router;
-  var server;
-  var Entity = require('@back4app/back4app-entity').models.Entity;
-  var Character;
-  before(function (done) {
+
+  describe('GET using entity', function () {
+    var Entity = require('@back4app/back4app-entity').models.Entity;
+    var Character;
     Character = Entity.specify({
       name: 'Character',
       attributes: {
@@ -249,52 +244,36 @@ describe('express GET entity', function () {
         job: {  type: 'String', multiplicity: '1', default: undefined }
       }
     });
-    //app.use(bodyParser.urlencoded({ extended: true }));
-    app.use(bodyParser.json());
-    router = express.Router();
-    router.get('/', function (req, res) {
-      res.status(200).send('api working');
-    });
-    app.use('/api', router);
-    server = app.listen(3000, function () {
-      var port = server.address().port;
-      expect(port).to.equal(3000);
-      done();
-    });
-  });
 
-  after(function () {
-    server.close();
-  });
-
-  it('should add GET route to /api/character (CRUD - Read)', function (done) {
-    var route = '/' + Character.specification.name;
-    router.route(route)
-      .get(function (req, res) {
-        var moriarty = new Character({
-          name: 'James Moriarty',
-          job: 'Criminal Mastermind'
+    it('should add GET route to /api/character (CRUD - Read)', function (done) {
+      var routePath = '/' + Character.specification.name;
+      router.route(routePath)
+        .get(function (req, res) {
+          var moriarty = new Character({
+            name: 'James Moriarty',
+            job: 'Criminal Mastermind'
+          });
+          res.json(moriarty);
         });
-        res.json(moriarty);
-      });
 
-    var req = http.request({
-      host: 'localhost',
-      port: '3000',
-      path: '/api/character',
-      method: 'GET'
-    }, function (response) {
-      expect(response.statusCode).to.equal(200);
-      var body = '';
-      response.on('data', function (d) { body += d; });
-      response.on('end', function () {
-        var responseObj = JSON.parse(body);
-        expect(responseObj).to.be.an('object');
-        expect(responseObj.name).to.equal('James Moriarty');
-        expect(responseObj.job).to.equal('Criminal Mastermind');
-        done();
+      var req = http.request({
+        host: 'localhost',
+        port: '3000',
+        path: '/api/Character',
+        method: 'GET'
+      }, function (response) {
+        expect(response.statusCode).to.equal(200);
+        var body = '';
+        response.on('data', function (d) { body += d; });
+        response.on('end', function () {
+          var responseObj = JSON.parse(body);
+          expect(responseObj).to.be.an('object');
+          expect(responseObj.name).to.equal('James Moriarty');
+          expect(responseObj.job).to.equal('Criminal Mastermind');
+          done();
+        });
       });
+      req.end();
     });
-    req.end();
   });
 });
