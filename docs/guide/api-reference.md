@@ -8,11 +8,14 @@ deleting data related to them.
 
 ## Authentication
 
-Basically, everything happens using you authentication Token, as you make a
-request. This will define if you have permission to interact with the
-requested path, without telling us your back4app credentials everytime.
+Sending us the _App ID_, you will have access to your project, beign able to
+interact with the entities.
 
-It must be sent inside the request's header.
+Basically, everything happens using you _authentication Token_, as you make a
+request. This will define if you have permission to interact with the
+requested path, without telling us your back4app credentials every time.
+
+They must be sent inside the request's header.
 <!--
 
 Considering the possibility of the user hosting his own code,
@@ -21,8 +24,7 @@ our responsability.
 This was not considered on this section.
 
 -->
-Using the entire platform, you might be able to access the hostname
-"yourproject.back4app.com".
+
 
 ## Paths
 
@@ -75,9 +77,15 @@ Content-Type: application/json;
 }]
 ```
 
-It returns all the instances registered in database.
+It returns all the instances registered in database, using pagination to separate
+lots of data.
+Using the the parameter q, you will be able to send a query to filter the
+returned data.
+Since the query receives a JSON, it must be URLEncoded before sent as parameter.
+
 
 ---
+
 
 ##### POST on /entity
 
