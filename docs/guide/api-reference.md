@@ -39,11 +39,11 @@ using HTTP Methods:
 
 | Method | Path | Action |
 | --- | --- | --- |
-| GET | /entity | Returns all the data from this Entity Instances. |
-| POST | /entity | Creates a new Entity Instance with the data passed. |
-| GET | /entity/id | Returns the data from the Entity Instance that matches with the given ID. |
-| PUT | /entity/id | Updates the data from the Entity Instance that matches with the given ID. |
-| DELETE | /entity/id | Delete the data from the Entity Instance that matches with the given ID. |
+| GET | /entity/ | Returns all the data from this Entity Instances. |
+| POST | /entity/ | Creates a new Entity Instance with the data passed. |
+| GET | /entity/id/ | Returns the data from the Entity Instance that matches with the given ID. |
+| PUT | /entity/id/ | Updates the data from the Entity Instance that matches with the given ID. |
+| DELETE | /entity/id/ | Delete the data from the Entity Instance that matches with the given ID. |
 
 ## How do I use it?
 
@@ -244,10 +244,10 @@ The body shall show the difference, between not finding a route, page or a resou
 | Methods/Route | Possible Status |
 | --- | --- |
 | (All) | 401, 403, 500 |
-| GET /entity | 200, 400 |
-| POST /entity | 201, 400 |
-| GET /entity/id | 200, 400, 404 |
-| POST /entity/id | 200, 400, 404 |
-| PUT /entity/id | 200, 400, 404 |
-| DELETE /entity/id | 200, 400, 404 |
+| GET /entity/ | 200, 400 |
+| POST /entity/ | 201, 400 |
+| GET /entity/id/ | 200, 400, 404 |
+| POST /entity/id/ | 200, 400, 404 |
+| PUT /entity/id/ | 200, 400, 404 |
+| DELETE /entity/id/ | 200, 400, 404 |
 | Any other | 405 |
