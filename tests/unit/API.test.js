@@ -17,6 +17,6 @@ describe('back4app-rest', function () {
     api.start().then(function (port) {
       expect(port).to.equal(3001);
       done();
-    })
+    });
   });
 });

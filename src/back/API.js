@@ -10,7 +10,7 @@ module.exports = API;
 
 function API() {
   this.settings = settings;
-  this.server;
+  this.server = null;
 
   this.start = start;
   this.close = close;
