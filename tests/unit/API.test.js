@@ -10,6 +10,14 @@ var entityRouter = require('../../').entities.entityRouter;
 describe('back4app-rest entityRouter', function () {
   var server;
 
+  before(function (done) {
+    server = app.listen(3000, function () {
+      var port = server.address().port;
+      expect(port).to.equal(3000);
+      done();
+    });
+  });
+
   after(function () {
     server.close();
   });
@@ -23,30 +31,25 @@ describe('back4app-rest entityRouter', function () {
 
     app.use('/api', router);
 
-    server = app.listen(3000, function () {
-      var port = server.address().port;
-      expect(port).to.equal(3000);
-      yo();
-    });
-
-    function yo() {
-      var req = http.request({
-        host: 'localhost',
-        port: '3000',
-        path: '/api/test',
-        method: 'GET'
-      }, function (response) {
-        expect(response.statusCode).to.equal(200);
-        var body = '';
-        response.on('data', function (d) { body += d; });
-        response.on('end', function () {
-          var responseObj = JSON.parse(body);
-          expect(responseObj.name).to.equal('test');
-          done();
-        });
+    var req = http.request({
+      host: 'localhost',
+      port: '3000',
+      path: '/api/test',
+      method: 'GET'
+    }, function (response) {
+      expect(response.statusCode).to.equal(200);
+      var body = '';
+      response.on('data', function (d) { body += d; });
+      response.on('end', function () {
+        var responseObj = JSON.parse(body);
+        expect(responseObj.name).to.equal('test');
+        done();
       });
-      req.end();
-    }
+    });
+    req.end();
+
+
+
 
   });
 });
