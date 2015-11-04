@@ -34,7 +34,9 @@
     "mocha": "^2.3.3"
   },
   "dependencies": {
-    "@back4app/back4app-entity": "^1.0.4",
+    "@back4app/back4app-entity": "^1.0.5",
+    "bluebird": "^3.0.5",
+    "body-parser": "^1.14.1",
     "express": "^4.13.3"
   }
 }

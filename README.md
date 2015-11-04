@@ -76,14 +76,6 @@ npm install gulp --global
 
 #### Gulp Tasks
 
-##### injectindex
-
-During development, the results can be visualized on a static web page.
-In order to keep it updated, this task injects the .js and .css files on index.html
-
-It uses the `gulp-inject` package to and reads the `gulp.config.json` file.
-
-
 ##### lint
 
 This task is used to maintain the established standards on code style and avoid syntax errors.
