@@ -1,3 +1,5 @@
+'use strict';
+
 var express = require('express');
 var bodyParser = require('body-parser');
 
@@ -7,7 +9,10 @@ function entityRouter(entities, accessToken) {
   var router = express.Router();
 
   router.use(function (request, response, next) {
-    next();
+    //access token validation
+    if (accessToken) {
+      next();
+    }
   });
 
   router.use(bodyParser.json());

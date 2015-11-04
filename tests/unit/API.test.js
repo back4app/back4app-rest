@@ -8,7 +8,6 @@ var http = require('http');
 var entityRouter = require('../../').entities.entityRouter;
 
 describe('back4app-rest entityRouter', function () {
-  var router;
   var server;
 
   after(function () {
