@@ -22,6 +22,12 @@ function entityRouter(entities, accessToken) {
     response.send({name: entity.Entity.name || ''});
   });
 
+  /**
+   * Adds a handler to the express router (GET /:entity/:id/). The handler
+   * return an entity searching by id.
+   * @name module:back4app-rest.entities.entityRouter#get
+   * @function
+   */
   router.get('/:entity/:id/', function get(req, res) {
     var entityName = req.params.entity;
     var id = req.params.id;
