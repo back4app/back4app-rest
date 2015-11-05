@@ -10,10 +10,20 @@ function entityRouter(entities, accessToken) {
 
   router.use(function (request, response, next) {
     //access token validation
-    if (accessToken) {
+    var token = request.headers['x-access-token'] || '';
+    if(!token)
+    {
+      response.status(403).send('Token not supplied or empty');
+    }
+    else if(token == accessToken)
+    {
       next();
     }
-  });
+    else
+    {
+      response.status(404).send('Invalid token');
+    }
+  });''
 
   router.use(bodyParser.json());
 
