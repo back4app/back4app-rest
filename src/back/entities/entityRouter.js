@@ -22,7 +22,15 @@ function entityRouter(entities, accessToken) {
     response.send({name: entity.Entity.name || ''});
   });
 
-  router.delete('/:entity/:id/', function (request, response) {
+  /**DELETE on /entity:id
+   * @name module:back4app-rest. entityRouter#Delete
+   * @function
+   * @returns {Router.<Express|Status Code>} Returns the router and
+   * a error defined by its status code.
+   * @example
+   * DELETE /entities/person/id/ HTTP/1.1
+   */
+  router.delete('/:entity/:id/', function Delete(request, response) {
     var Entity;
     var entity;
 
