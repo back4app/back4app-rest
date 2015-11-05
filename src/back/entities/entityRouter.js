@@ -19,12 +19,22 @@ function entityRouter(entities, accessToken) {
 
   router.use(bodyParser.json());
 
+  router.use(errorHandler);
+
+  function errorHandler (err, req, res, next) {
+    if(!err) return next();
+    res.status(400).json(err);
+    console.log('WEIUBFOWUAFDHANWEFYAWEIOFLAKWNFEJVQKAS #1', err);
+    //next(err);
+  }
+
   router.get('/:entity/', function (request, response) {
     var entity = entities[request.params.entity];
     response.send({name: entity.Entity.name || ''});
   });
 
   router.post('/:entity/', function (request, response) {
+    console.log('WEIUBFOWUAFDHANWEFYAWEIOFLAKWNFEJVQKAS #2', request.body);
     var Entity = entities[request.params.entity];
     if (Entity) {
       expect(Entity).to.be.a('function');
@@ -32,7 +42,7 @@ function entityRouter(entities, accessToken) {
       entity.save();
       response.status(201).json(entity);
     } else {
-      response.status(400).json({
+      response.status(404).json({
         message: 'Entity not found',
         code: 0,
         body: request.params.entity
