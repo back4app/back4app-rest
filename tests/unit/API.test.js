@@ -10,10 +10,12 @@ var entityModule = require('@back4app/back4app-entity');
 var Entity = entityModule.models.Entity;
 var MongoAdapter = require('@back4app/back4app-entity-mongodb').MongoAdapter;
 var mongodb = require('mongodb');
+var Promise = require('bluebird');
 
 describe('back4app-rest entityRouter', function () {
   var server;
   var db;
+  var Hurricanes;
 
   before(function () {
     entityModule.settings.ADAPTERS.default = new
@@ -26,13 +28,15 @@ describe('back4app-rest entityRouter', function () {
   });
 
   after(function () {
-    server.close();
-    return entityModule.settings.ADAPTERS.default.closeConnection();
+    return Promise.all([
+      db.close(),
+      entityModule.settings.ADAPTERS.default.closeConnection(),
+      server.close()
+    ]);
   });
 
-  it('should DELETE on /:entity/', function (done) {
-
-    var Hurricanes = Entity.specify({
+  beforeEach(function (done) {
+    Hurricanes = Entity.specify({
       name: 'Hurricanes',
       attributes: {
         name: { type: 'String', multiplicity: '1', default: undefined },
@@ -49,10 +53,18 @@ describe('back4app-rest entityRouter', function () {
       category: 5
     };
 
-    db.collection('Hurricanes').insertOne(richardD).then(function (r) {
-      expect(r.insertedCount).to.equal(1);
+    db.collection('Hurricanes')
+      .insertOne(richardD).then(function (r) {
+        expect(r.insertedCount).to.equal(1);
+        done();
     });
+  });
 
+  afterEach(function () {
+    return db.dropDatabase();
+  });
+
+  it('should DELETE on /:entity/', function (done) {
     var router = entityRouter({
       Hurricanes: Hurricanes
     }, 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
@@ -68,9 +80,17 @@ describe('back4app-rest entityRouter', function () {
         'X-Access-Token': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
       }
     },
-      function (response) {
+    function (response) {
       expect(response.statusCode).to.equal(204);
-      done();
+      db.collection('Hurricanes')
+        .find({_id: '00000000-0000-4000-a000-000000000000'})
+        .toArray()
+        .then(function (docs) {
+          expect(docs.length).to.equal(0);
+          done();
+        }).catch(function (err) {
+          console.log(err);
+        });
     });
 
     req.on('error', function (error) {
@@ -78,15 +98,6 @@ describe('back4app-rest entityRouter', function () {
     });
 
     req.end();
-
-    db.collection('Hurricanes')
-      .find({_id: '00000000-0000-4000-a000-000000000000'})
-      .toArray()
-      .then(function (error, docs) {
-        expect(error).to.equal(null);
-        expect(docs.length).to.equal(0);
-        db.close();
-      });
 
   });
 
