@@ -1,5 +1,7 @@
 'use strict';
 
+return;
+
 var chai = require('chai');
 var expect = chai.expect;
 var http = require('http');
