@@ -57,7 +57,7 @@ describe('back4app-rest entityRouter', function () {
       .insertOne(richardD).then(function (r) {
         expect(r.insertedCount).to.equal(1);
         done();
-    });
+      });
   });
 
   afterEach(function () {
