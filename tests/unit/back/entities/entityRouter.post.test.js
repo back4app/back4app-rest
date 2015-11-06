@@ -16,6 +16,7 @@ require('../../settings');
 
 // util functions
 function post(postData, options) {
+  options = options || {};
   return new Promise(function (resolve, reject) {
     var req = http.request({
       host: 'localhost',
