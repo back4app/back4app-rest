@@ -36,15 +36,6 @@ describe('back4app-rest entityRouter', function () {
   });
 
   beforeEach(function (done) {
-    Hurricanes = Entity.specify({
-      name: 'Hurricanes',
-      attributes: {
-        name: { type: 'String', multiplicity: '1', default: undefined },
-        //date: { type: 'Date', multiplicity: '1', default: undefined },
-        category: { type: 'Number', multiplicity: '1', default: undefined }
-      }
-    });
-
     //mongodb documents
     var richardD = {
       _id: '00000000-0000-4000-a000-000000000000',
@@ -64,13 +55,24 @@ describe('back4app-rest entityRouter', function () {
     return db.dropDatabase();
   });
 
-  it('should DELETE on /:entity/', function (done) {
+  it('should create a router using an Entity', function () {
+    Hurricanes = Entity.specify({
+      name: 'Hurricanes',
+      attributes: {
+        name: { type: 'String', multiplicity: '1', default: undefined },
+        //date: { type: 'Date', multiplicity: '1', default: undefined },
+        category: { type: 'Number', multiplicity: '1', default: undefined }
+      }
+    });
+
     var router = entityRouter({
       Hurricanes: Hurricanes
     }, 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
     app.use('/entities', router);
+  });
 
+  it('should DELETE on /:entity/', function (done) {
     var req = http.request({
       hostname: 'localhost',
       port: 3000,
@@ -79,8 +81,7 @@ describe('back4app-rest entityRouter', function () {
       headers: {
         'X-Access-Token': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
       }
-    },
-    function (response) {
+    }, function (response) {
       expect(response.statusCode).to.equal(204);
       db.collection('Hurricanes')
         .find({_id: '00000000-0000-4000-a000-000000000000'})
@@ -94,11 +95,55 @@ describe('back4app-rest entityRouter', function () {
     });
 
     req.on('error', function (error) {
-      console.log(error);
+      console.log('Erro aqui' + error);
     });
 
     req.end();
 
+  });
+
+  it('should not delete on /:entity/ with invalid entityName on path',
+    function (done) {
+      var req = http.request({
+        hostname: 'localhost',
+        port: 3000,
+        path: '/entities/wrongEntity/00000000-0000-4000-a000-000000000000/',
+        method: 'DELETE',
+        headers: {
+          'X-Access-Token': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        }
+      }, function (response) {
+        expect(response.statusCode).to.equal(400);
+        done();
+      });
+
+      req.on('error', function (error) {
+        console.log(error);
+      });
+
+      req.end();
+    });
+
+  it('should not return status code error on /:entity/ with invalid id on path',
+    function (done) {
+    var req = http.request({
+      hostname: 'localhost',
+      port: 3000,
+      path: '/entities/Hurricanes/00000000-0000-4000-a000-000000000111/',
+      method: 'DELETE',
+      headers: {
+        'X-Access-Token': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+      }
+    }, function (response) {
+      expect(response.statusCode).to.equal(204);
+      done();
+    });
+
+    req.on('error', function (error) {
+      console.log(error);
+    });
+
+    req.end();
   });
 
 });

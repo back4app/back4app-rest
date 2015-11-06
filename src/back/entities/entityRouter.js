@@ -22,23 +22,15 @@ function entityRouter(entities, accessToken) {
     response.send({name: entity.Entity.name || ''});
   });
 
-  /**DELETE on /entity:id
-   * @name module:back4app-rest. entityRouter#Delete
+  /*
+   * Adds a handler to the express router (DELETE /:entity/:id/). The handler
+   * returns a description of error if it occurred.
+   * @name module:back4app-rest.entities.entityRouter#_delete
    * @function
-   * @returns {Router.<Express|Status Code>} Returns the router and
-   * a error defined by its status code.
-   * @example
-   * DELETE /entities/person/id/ HTTP/1.1
    */
-  router.delete('/:entity/:id/', function Delete(request, response) {
-    var Entity;
-    var entity;
-
-    try {
-      Entity = entities[request.params.entity];
-      var id = request.params.id;
-      entity = new Entity({id: id});
-    } catch (err) {
+  router.delete('/:entity/:id/', function _delete(request, response) {
+    //check for errors
+    if (!entities.hasOwnProperty(request.params.entity)) {
       response.status(400).json({
         message: 'Entity is not defined',
         code: 0
@@ -46,12 +38,16 @@ function entityRouter(entities, accessToken) {
       return;
     }
 
+    var Entity = entities[request.params.entity];
+    var id = request.params.id;
+    var entity = new Entity({id: id});
+
     entity.delete()
       .then(function () {
         response.status(204).end();
       })
       .catch(function () {
-        response.status(400).json({
+        response.status(404).json({
           message: 'Internal error',
           code: 0
         });
