@@ -85,7 +85,7 @@ describe('back4app-rest entityRouter methods', function () {
     app.use('/entities', router);
   });
 
-  it.skip('should create an Entity\'s instance', function (done) {
+  it('should create an Entity\'s instance', function (done) {
     var postData = JSON.stringify({
       'name': 'Wilma',
       //'date': new Date('2005'),
@@ -127,14 +127,42 @@ describe('back4app-rest entityRouter methods', function () {
     var req = http.request({
       host: 'localhost',
       port: '3000',
-      path: '/entities/test',
+      path: '/entities/wrongEntity',
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': postData.length
+        'Content-Type': 'application/json'
       }
     }, function (response) {
       expect(response.statusCode).to.equal(404);
+      var body = '';
+      response.on('data', function (d) { body += d; });
+      response.on('end', function () {
+        var responseObj = JSON.parse(body);
+        expect(responseObj).to.have.property('message');
+        done();
+      });
+    });
+    req.write(postData);
+    req.end();
+  });
+
+  it('should not create an Entity\'s instance with wrong path', function (done) {
+    var postData = JSON.stringify({
+      'name': 'Wilma',
+      //'date': new Date('2005'),
+      'category': 5
+    });
+
+    var req = http.request({
+      host: 'localhost',
+      port: '3000',
+      path: '/entities/test',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }, function (response) {
+      expect(response.statusCode).to.equal(400);
       var body = '';
       response.on('data', function (d) { body += d; });
       response.on('end', function () {

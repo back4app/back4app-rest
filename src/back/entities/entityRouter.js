@@ -16,16 +16,39 @@ function entityRouter(entities, accessToken) {
       next();
     }
   });
-
   router.use(bodyParser.json());
+
+  /*router.use(function (req, res, next) {
+    var body = '';
+    req.on('data', function (a) {
+      body += a;
+    }).on('error', function (e) {
+      next(e);
+    });
+    req.on('end', function () {
+      try{
+        req.body = JSON.parse(body);
+        next();
+      } catch (e) {
+        next(e);
+      }
+    }).on('error', function (e) {
+      next(e);
+    });
+  });*/
 
   router.use(errorHandler);
 
   function errorHandler (err, req, res, next) {
-    if(!err) return next();
-    res.status(400).json(err);
-    console.log('WEIUBFOWUAFDHANWEFYAWEIOFLAKWNFEJVQKAS #1', err);
-    //next(err);
+    if (!err) {
+      next();
+    } else {
+      res.status(err.status || 500)
+        .json({
+          code: 0,
+          message: err.message
+        });
+    }
   }
 
   router.get('/:entity/', function (request, response) {
@@ -34,7 +57,6 @@ function entityRouter(entities, accessToken) {
   });
 
   router.post('/:entity/', function (request, response) {
-    console.log('WEIUBFOWUAFDHANWEFYAWEIOFLAKWNFEJVQKAS #2', request.body);
     var Entity = entities[request.params.entity];
     if (Entity) {
       expect(Entity).to.be.a('function');
