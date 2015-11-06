@@ -49,18 +49,26 @@ function entityRouter(entities, accessToken) {
    * @function
    */
   router.post('/:entity/', function (request, response) {
-    var Entity = entities[request.params.entity];
-    if (Entity) {
-      expect(Entity).to.be.a('function');
+    var entityName = request.params.entity;
+
+    if (!entities.hasOwnProperty(entityName)) {
+      response.status(404).json({
+        code: 0,
+        message: 'Entity not defined'
+      });
+      return;
+    }
+
+    var Entity = entities[entityName];
+
+    expect(Entity).to.be.a('function');
+
+    try {
       var entity = new Entity(request.body);
       entity.save();
       response.status(201).json(entity);
-    } else {
-      response.status(404).json({
-        message: 'Entity not found',
-        code: 0,
-        body: request.params.entity
-      });
+    } catch (e) {
+      next(e);
     }
   });
 
