@@ -11,6 +11,8 @@ var expect = chai.expect;
 var http = require('http');
 var express = require('express');
 var app = express();
+var MockAdapter =
+  require('@back4app/back4app-entity/tests/unit/back/adapters/MockAdapter');
 var bodyParser = require('body-parser');
 
 describe('express', function () {
@@ -241,8 +243,10 @@ describe('express REST', function () {
 
 
   describe('GET using entity', function () {
-    var Entity = require('@back4app/back4app-entity').models.Entity;
+    var entity = require('@back4app/back4app-entity');
+    var Entity = entity.models.Entity;
     var Character;
+    entity.settings.ADAPTERS.default = new MockAdapter();
     Character = Entity.specify({
       name: 'Character',
       attributes: {

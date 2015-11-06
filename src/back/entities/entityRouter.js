@@ -1,5 +1,7 @@
 'use strict';
 
+var chai = require('chai');
+var expect = chai.expect;
 var express = require('express');
 var bodyParser = require('body-parser');
 
@@ -17,12 +19,63 @@ function entityRouter(entities, accessToken) {
 
   router.use(bodyParser.json());
 
+  /**
+   * Adds an error handler to the express router. It returns
+   * the message and error code.
+   * @name module:back4app-rest.entities.entityRouter#get
+   * @function
+   */
+  router.use(function (err, req, res, next) {
+    if (!err) {
+      next();
+    } else {
+      res.status(err.status || 500)
+        .json({
+          code: 0,
+          message: err.message
+        });
+    }
+  });
+
   router.get('/:entity/', function (request, response) {
     var entity = entities[request.params.entity];
     response.send({name: entity.Entity.name || ''});
   });
 
   /**
+   * Adds a handler to the express router (GET /:entity/). It returns
+   * the inserted entity instance.
+   * @name module:back4app-rest.entities.entityRouter#post
+   * @function
+   */
+  router.post('/:entity/', function (request, response) {
+    var entityName = request.params.entity;
+
+    if (!entities.hasOwnProperty(entityName)) {
+      response.status(404).json({
+        code: 0,
+        message: 'Entity not defined'
+      });
+      return;
+    }
+
+    var Entity = entities[entityName];
+
+    expect(Entity).to.be.a('function');
+
+    var entity = new Entity(request.body);
+    entity.save().then(function () {
+      response.status(201).json(_objectToDocument(entity));
+    })
+      .catch(function () {
+        response.status(400).json({
+          code: 0,
+          message: 'Internal Error'
+        });
+      });
+  });
+
+  /*
    * Adds a handler to the express router (GET /:entity/:id/). The handler
    * return an entity searching by id.
    * @name module:back4app-rest.entities.entityRouter#get
