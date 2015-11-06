@@ -64,11 +64,11 @@ function entityRouter(entities, accessToken) {
     expect(Entity).to.be.a('function');
 
     var entity = new Entity(request.body);
-    entity.save().then(function (entity) {
+    entity.save().then(function () {
       response.status(201).json(_objectToDocument(entity));
     })
       .catch(function () {
-        response.status(500).json({
+        response.status(400).json({
           code: 0,
           message: 'Internal Error'
         });

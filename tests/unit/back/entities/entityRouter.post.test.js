@@ -169,4 +169,20 @@ describe('entityRouter', function () {
         expect(res).to.have.property('message');
       });
   });
+
+  it('should not create an Entity\'s' +
+    ' instance with invalid Entity attributes', function () {
+    var postData = JSON.stringify({
+      'name': 0,
+      //'date': new Date('2005'),
+      'category': ''
+    });
+
+    return post(postData, {
+      status: 400
+    })
+      .then(function (res) {
+        expect(res).to.have.property('message');
+      });
+  });
 });
