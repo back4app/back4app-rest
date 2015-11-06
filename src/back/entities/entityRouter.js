@@ -37,13 +37,8 @@ function entityRouter(entities, accessToken) {
     }
   });
 
-  router.get('/:entity/', function (request, response) {
-    var entity = entities[request.params.entity];
-    response.send({name: entity.Entity.name || ''});
-  });
-
   /**
-   * Adds a handler to the express router (GET /:entity/). It returns
+   * Adds a handler to the express router (POST /:entity/). It returns
    * the inserted entity instance.
    * @name module:back4app-rest.entities.entityRouter#post
    * @function
@@ -75,7 +70,7 @@ function entityRouter(entities, accessToken) {
       });
   });
 
-  /*
+  /**
    * Adds a handler to the express router (GET /:entity/:id/). The handler
    * return an entity searching by id.
    * @name module:back4app-rest.entities.entityRouter#get
@@ -104,6 +99,49 @@ function entityRouter(entities, accessToken) {
         res.status(404).json({
           code: 0,
           message: 'Entity not found'
+        });
+      });
+  });
+
+  /**
+   * Adds a handler to the express router (GET /:entity/). The handler
+   * return a list of entities filtered by an optional query.
+   * @name module:back4app-rest.entities.entityRouter#find
+   * @function
+   */
+  router.get('/:entity/', function find(req, res) {
+    var entityName = req.params.entity;
+
+    // check for errors
+    if (!entities.hasOwnProperty(entityName)) {
+      res.status(404).json({
+        code: 0,
+        message: 'Entity not defined'
+      });
+      return;
+    }
+
+    var Entity = entities[entityName];
+
+    var query = {};
+    if (req.query.hasOwnProperty('query')) {
+      // decode query's "query" param
+      var queryStr = req.query.query;
+      query = JSON.parse(decodeURIComponent(queryStr));
+    }
+
+    Entity.find(query)
+      .then(function (entities) {
+        var results = [];
+        for (var i = 0; i < entities.length; i++) {
+          results.push(_objectToDocument(entities[i]));
+        }
+        res.json({results: results});
+      })
+      .catch(function () {
+        res.status(500).json({
+          code: 0,
+          message: 'Internal error'
         });
       });
   });
