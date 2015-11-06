@@ -63,13 +63,16 @@ function entityRouter(entities, accessToken) {
 
     expect(Entity).to.be.a('function');
 
-    try {
-      var entity = new Entity(request.body);
-      entity.save();
-      response.status(201).json(entity);
-    } catch (e) {
-      next(e);
-    }
+    var entity = new Entity(request.body);
+    entity.save().then(function (entity) {
+      response.status(201).json(_objectToDocument(entity));
+    })
+      .catch(function () {
+        response.status(500).json({
+          code: 0,
+          message: 'Internal Error'
+        });
+      });
   });
 
   /*

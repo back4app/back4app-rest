@@ -55,7 +55,7 @@ describe.skip('back4app-rest entityRouter', function () {
 });
 
 
-describe('back4app-rest entityRouter methods', function () {
+describe.skip('back4app-rest entityRouter methods', function () {
   var server;
 
   before(function (done) {
@@ -71,7 +71,8 @@ describe('back4app-rest entityRouter methods', function () {
   });
 
   it('should create a router using an Entity', function () {
-    entityModule.settings.ADAPTERS.default = new MongoAdapter('mongodb://127.0.0.1:27017');
+    entityModule.settings.ADAPTERS.default =
+      new MongoAdapter('mongodb://127.0.0.1:27017');
     var Hurricanes = Entity.specify({
       name: 'Hurricanes',
       attributes: {
