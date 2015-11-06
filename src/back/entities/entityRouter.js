@@ -1,5 +1,7 @@
 'use strict';
 
+var chai = require('chai');
+var expect = chai.expect;
 var express = require('express');
 var bodyParser = require('body-parser');
 
@@ -17,9 +19,131 @@ function entityRouter(entities, accessToken) {
 
   router.use(bodyParser.json());
 
-  router.get('/:entity/', function (request, response) {
-    var entity = entities[request.params.entity];
-    response.send({name: entity.Entity.name || ''});
+  /**
+   * Adds an error handler to the express router. It returns
+   * the message and error code.
+   * @name module:back4app-rest.entities.entityRouter#get
+   * @function
+   */
+  router.use(function (err, req, res, next) {
+    if (!err) {
+      next();
+    } else {
+      res.status(err.status || 500)
+        .json({
+          code: 0,
+          message: err.message
+        });
+    }
+  });
+
+  /**
+   * Adds a handler to the express router (POST /:entity/). It returns
+   * the inserted entity instance.
+   * @name module:back4app-rest.entities.entityRouter#post
+   * @function
+   */
+  router.post('/:entity/', function (request, response) {
+    var entityName = request.params.entity;
+
+    if (!entities.hasOwnProperty(entityName)) {
+      response.status(404).json({
+        code: 0,
+        message: 'Entity not defined'
+      });
+      return;
+    }
+
+    var Entity = entities[entityName];
+
+    expect(Entity).to.be.a('function');
+
+    var entity = new Entity(request.body);
+    entity.save().then(function () {
+      response.status(201).json(_objectToDocument(entity));
+    })
+      .catch(function () {
+        response.status(400).json({
+          code: 0,
+          message: 'Internal Error'
+        });
+      });
+  });
+
+  /**
+   * Adds a handler to the express router (GET /:entity/:id/). The handler
+   * return an entity searching by id.
+   * @name module:back4app-rest.entities.entityRouter#get
+   * @function
+   */
+  router.get('/:entity/:id/', function get(req, res) {
+    var entityName = req.params.entity;
+    var id = req.params.id;
+
+    // check for errors
+    if (!entities.hasOwnProperty(entityName)) {
+      res.status(404).json({
+        code: 0,
+        message: 'Entity not defined'
+      });
+      return;
+    }
+
+    var Entity = entities[entityName];
+
+    Entity.get({id: id})
+      .then(function (entity) {
+        res.json(_objectToDocument(entity));
+      })
+      .catch(function () {
+        res.status(404).json({
+          code: 0,
+          message: 'Entity not found'
+        });
+      });
+  });
+
+  /**
+   * Adds a handler to the express router (GET /:entity/). The handler
+   * return a list of entities filtered by an optional query.
+   * @name module:back4app-rest.entities.entityRouter#find
+   * @function
+   */
+  router.get('/:entity/', function find(req, res) {
+    var entityName = req.params.entity;
+
+    // check for errors
+    if (!entities.hasOwnProperty(entityName)) {
+      res.status(404).json({
+        code: 0,
+        message: 'Entity not defined'
+      });
+      return;
+    }
+
+    var Entity = entities[entityName];
+
+    var query = {};
+    if (req.query.hasOwnProperty('query')) {
+      // decode query's "query" param
+      var queryStr = req.query.query;
+      query = JSON.parse(decodeURIComponent(queryStr));
+    }
+
+    Entity.find(query)
+      .then(function (entities) {
+        var results = [];
+        for (var i = 0; i < entities.length; i++) {
+          results.push(_objectToDocument(entities[i]));
+        }
+        res.json({results: results});
+      })
+      .catch(function () {
+        res.status(500).json({
+          code: 0,
+          message: 'Internal error'
+        });
+      });
   });
 
   /*
@@ -55,4 +179,23 @@ function entityRouter(entities, accessToken) {
   });
 
   return router;
+}
+
+function _objectToDocument(entityObject) {
+  var document = {};
+
+  var adapterName = entityObject.adapterName;
+  var attributes = entityObject.Entity.attributes;
+
+  for (var attrName in attributes) {
+    if (attributes.hasOwnProperty(attrName)) {
+      var attr = attributes[attrName];
+      var attrDataName = attr.getDataName(adapterName);
+      document[attrDataName] = attr.getDataValue(entityObject[attrName]);
+    }
+  }
+
+  document.Entity = entityObject.Entity.specification.name;
+
+  return document;
 }
