@@ -14,33 +14,6 @@ var entityRouter = require('../../../../').entities.entityRouter;
 // setup tests settings
 require('../../settings');
 
-// util functions
-//function _delete() {
-//  return new Promise(function (resolve, reject) {
-//    var req = http.request({
-//      hostname: 'localhost',
-//      port: 3000,
-//      path: '/entities/Hurricanes/00000000-0000-4000-a000-000000000000/',
-//      method: 'DELETE',
-//      headers: {
-//        'X-Access-Token': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-//      }
-//    }, function (response) {
-//      expect(response.statusCode).to.equal(204);
-//      db.collection('Hurricanes')
-//        .find({_id: '00000000-0000-4000-a000-000000000000'})
-//        .toArray()
-//        .then(function (docs) {
-//          expect(docs.length).to.equal(0);
-//          done();
-//        }).catch(function (err) {
-//          console.log(err);
-//        });
-//    });
-//  });
-//
-//}
-
 //util tests
 describe('entityRouter', function () {
   // back4app Entities
