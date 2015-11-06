@@ -21,7 +21,7 @@ function post(postData, options) {
     var req = http.request({
       host: 'localhost',
       port: '3000',
-      path: options.path || '/entities/test',
+      path: options.path || '/entities/Hurricane',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
