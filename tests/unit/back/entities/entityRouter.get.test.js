@@ -80,6 +80,11 @@ describe('entityRouter', function () {
   // entity JSON objects
   var john = {Entity: 'Person', id: '0ca3c8c9-41a7-4967-a285-21f8cb4db2c0',
     name: 'John', age: 30, married: true};
+  var theo = {Entity: 'Person', id: '5c2ca70f-d51a-4c97-a3ea-1668bde10fe7',
+    name: 'Theo', age: 20, married: false};
+  var will = {Entity: 'Person', id: 'd609db0b-b1f4-421a-a5f2-df8934ab023f',
+    name: 'Will', age: 30, married: false};
+
 
   // testing vars
   var mongoAdapter;
@@ -172,6 +177,43 @@ describe('entityRouter', function () {
 
     it('should return 404 code on wrong id', function () {
       return fetchJSON('/entities/Person/00000000-0000-0000-0000-000000000000/')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(404);
+        });
+    });
+
+  });
+
+  describe('GET /:entity/', function () {
+
+    it('should find entities without query', function () {
+      return fetchJSON('/entities/Person/')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals({
+            results: [john, theo, will]
+          });
+        });
+    });
+
+    it('should find entities filtered by query', function () {
+      var query = JSON.stringify({
+        name: {
+          $in: ['John', 'Will']
+        }
+      });
+      var url = '/entities/Person/?query=' + encodeURIComponent(query);
+      return fetchJSON(url)
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals({
+            results: [john, will]
+          });
+        });
+    });
+
+    it('should return 404 code on wrong entity', function () {
+      return fetchJSON('/entities/Wrong/')
         .then(function (res) {
           expect(res.statusCode).to.be.equals(404);
         });
