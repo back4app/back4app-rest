@@ -8,7 +8,8 @@ var http = require('http');
 var entityRouter = require('../../').entities.entityRouter;
 var entityModule = require('@back4app/back4app-entity');
 var Entity = entityModule.models.Entity;
-var MongoAdapter = require('@back4app/back4app-entity-mongodb').MongoAdapter;
+var MongoAdapter =
+  require('@back4app/back4app-entity-mongodb').MongoAdapter;
 
 describe.skip('back4app-rest entityRouter', function () {
   var server;
@@ -117,7 +118,8 @@ describe('back4app-rest entityRouter methods', function () {
     req.end();
   });
 
-  it('should not create an Entity\'s instance with wrong path', function (done) {
+  it('should not create an Entity\'s' +
+    ' instance with wrong path', function (done) {
     var postData = JSON.stringify({
       'name': 'Wilma',
       //'date': new Date('2005'),
@@ -146,7 +148,8 @@ describe('back4app-rest entityRouter methods', function () {
     req.end();
   });
 
-  it('should not create an Entity\'s instance with wrong path', function (done) {
+  it('should not create an Entity\'s' +
+    ' instance with invalid body', function (done) {
     var postData = JSON.stringify({
       'name': 'Wilma',
       //'date': new Date('2005'),
@@ -171,7 +174,7 @@ describe('back4app-rest entityRouter methods', function () {
         done();
       });
     });
-    req.write('o'+postData);
+    req.write('o' + postData);
     req.end();
   });
 

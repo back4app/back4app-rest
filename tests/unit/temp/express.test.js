@@ -5,7 +5,8 @@ var expect = chai.expect;
 var http = require('http');
 var express = require('express');
 var app = express();
-var MockAdapter = require('@back4app/back4app-entity/tests/unit/back/adapters/MockAdapter');
+var MockAdapter =
+  require('@back4app/back4app-entity/tests/unit/back/adapters/MockAdapter');
 var bodyParser = require('body-parser');
 
 describe('express', function () {

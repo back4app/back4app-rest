@@ -16,30 +16,16 @@ function entityRouter(entities, accessToken) {
       next();
     }
   });
+
   router.use(bodyParser.json());
 
-  /*router.use(function (req, res, next) {
-    var body = '';
-    req.on('data', function (a) {
-      body += a;
-    }).on('error', function (e) {
-      next(e);
-    });
-    req.on('end', function () {
-      try{
-        req.body = JSON.parse(body);
-        next();
-      } catch (e) {
-        next(e);
-      }
-    }).on('error', function (e) {
-      next(e);
-    });
-  });*/
-
-  router.use(errorHandler);
-
-  function errorHandler (err, req, res, next) {
+  /**
+   * Adds an error handler to the express router. It returns
+   * the message and error code.
+   * @name module:back4app-rest.entities.entityRouter#get
+   * @function
+   */
+  router.use(function (err, req, res, next) {
     if (!err) {
       next();
     } else {
@@ -49,13 +35,19 @@ function entityRouter(entities, accessToken) {
           message: err.message
         });
     }
-  }
+  });
 
   router.get('/:entity/', function (request, response) {
     var entity = entities[request.params.entity];
     response.send({name: entity.Entity.name || ''});
   });
 
+  /**
+   * Adds a handler to the express router (GET /:entity/). It returns
+   * the inserted entity instance.
+   * @name module:back4app-rest.entities.entityRouter#post
+   * @function
+   */
   router.post('/:entity/', function (request, response) {
     var Entity = entities[request.params.entity];
     if (Entity) {
