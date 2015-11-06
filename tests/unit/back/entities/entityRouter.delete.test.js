@@ -17,8 +17,8 @@ require('../../settings');
 //util tests
 describe('entityRouter', function () {
   // back4app Entities
-  var Hurricane = Entity.specify({
-    name: 'Hurricane',
+  var Vehicle = Entity.specify({
+    name: 'Vehicle',
     attributes: {
       name: {type: 'String', multiplicity: '1', default: undefined},
       category: {type: 'Number', multiplicity: '1', default: undefined}
@@ -52,7 +52,7 @@ describe('entityRouter', function () {
 
   function startAPI() {
     var router = entityRouter({
-      Hurricane: Hurricane
+      Vehicle: Vehicle
     }, 'test_access_token');
 
     var app = express();
@@ -90,12 +90,12 @@ describe('entityRouter', function () {
       //mongodb documents
       var richard = {
         _id: '00000000-0000-4000-a000-000000000000',
-        Entity: 'Hurricane',
+        Entity: 'Vehicle',
         name: 'Richard',
         category: 5
       };
 
-      db.collection('Hurricane')
+      db.collection('Vehicle')
         .insertOne(richard).then(function (r) {
           expect(r.insertedCount).to.equal(1);
           done();
@@ -110,14 +110,14 @@ describe('entityRouter', function () {
       var req = http.request({
         hostname: 'localhost',
         port: 3000,
-        path: '/entities/Hurricane/00000000-0000-4000-a000-000000000000/',
+        path: '/entities/Vehicle/00000000-0000-4000-a000-000000000000/',
         method: 'DELETE',
         headers: {
           'X-Access-Token': 'test_access_token'
         }
       }, function (response) {
         expect(response.statusCode).to.equal(204);
-        db.collection('Hurricane')
+        db.collection('Vehicle')
           .find({_id: '00000000-0000-4000-a000-000000000000'})
           .toArray()
           .then(function (docs) {
@@ -163,7 +163,7 @@ describe('entityRouter', function () {
         var req = http.request({
           hostname: 'localhost',
           port: 3000,
-          path: '/entities/Hurricane/00000000-0000-4000-a000-000000000111/',
+          path: '/entities/Vehicle/00000000-0000-4000-a000-000000000111/',
           method: 'DELETE',
           headers: {
             'X-Access-Token': 'test_access_token'
