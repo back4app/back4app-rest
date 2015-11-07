@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/back4app/back4app-rest#readme",
   "devDependencies": {
-    "@back4app/back4app-entity-mongodb": "^1.0.0",
+    "@back4app/back4app-entity-mongodb": "^1.0.1",
     "chai": "^3.3.0",
     "gulp": "^3.9.0",
     "gulp-jscs": "^2.0.0",
@@ -36,7 +36,7 @@
     "mongodb": "^2.0.47"
   },
   "dependencies": {
-    "@back4app/back4app-entity": "^1.0.6",
+    "@back4app/back4app-entity": "^1.0.7",
     "bluebird": "^3.0.5",
     "body-parser": "^1.14.1",
     "express": "^4.13.3"
