@@ -146,6 +146,46 @@ function entityRouter(entities, accessToken) {
       });
   });
 
+  /**
+   * Adds a handler to the express router (UPDATE /:entity/). It returns
+   * the updated entity instance.
+   * @name module:back4app-rest.entities.entityRouter#update
+   * @function
+   */
+  router.put('/:entity/:id/', function update(request, response) {
+    var entityName = request.params.entity;
+    var id = request.params.id;
+
+    // check for errors
+    if (!entities.hasOwnProperty(entityName)) {
+      response.status(404).json({
+        code: 0,
+        message: 'Entity not defined'
+      });
+      return;
+    }
+
+    var Entity = entities[request.params.entity];
+
+    expect(Entity).to.be.a('function');
+
+    Entity.get({id: id}).then(function (entity) {
+        for (var property in request.body) {
+          entity[property] = request.body[property];
+        }
+
+        entity.save().then(function () {
+          response.status(200).json(_objectToDocument(entity));
+        });
+      })
+      .catch(function () {
+        response.status(404).json({
+          code: 0,
+          message: 'Entity not found'
+        });
+      });
+  });
+
   /*
    * Adds a handler to the express router (DELETE /:entity/:id/). The handler
    * returns a description of error if it occurred.
