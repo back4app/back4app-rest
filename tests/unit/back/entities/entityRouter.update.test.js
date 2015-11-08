@@ -15,39 +15,37 @@ var entityRouter = require('../../../../').entities.entityRouter;
 require('../../settings');
 
 // util functions
-// function update(path) {
-//   return new Promise(function (resolve, reject) {
-//     var options = {
-//       hostname: '127.0.0.1',
-//       port: 3000,
-//       path: path,
-//       headers: {
-//         'X-Access-Token': 'test_access_token'
-//       }
-//     };
-//     http.get(options, function (res) {
-//       var body = '';
+function update(postData, options) {
 
-//       res.setEncoding('utf8');
-
-//       res.on('data', function (chunk) {
-//         body += chunk.toString();
-//       });
-
-//       res.on('end', function () {
-//         res.body = body;
-//         try {
-//           res.json = JSON.parse(body);
-//         } catch (e) {
-//           // invalid JSON, do nothing
-//         }
-//         resolve(res);
-//       });
-//     }).on('error', function (err) {
-//       reject(err);
-//     });
-//   });
-// }
+  return new Promise(function (resolve, reject) {
+    var req = http.request({
+      host: 'localhost',
+      port: '3000',
+      path: options.path,
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': 'test_access_token'
+      }
+    }, function (response) {
+      expect(response.statusCode).to.equal(options.status || 200);
+      var body = '';
+      response.on('error', function (err) {
+        reject(err);
+      });
+      response.on('data', function (d) { body += d; });
+      response.on('end', function () {
+        var responseObj = JSON.parse(body);
+        resolve(responseObj);
+      });
+    });
+    if (options.invalidJSON) {
+      postData = 'o' + postData;
+    }
+    req.write(postData);
+    req.end();
+  });
+}
 
 // unit tests
 describe('entityRouter', function () {
@@ -56,7 +54,7 @@ describe('entityRouter', function () {
     name: 'Company',
     attributes: {
       fantasyName: {type: 'String'},
-      employees: {type: 'Number'},
+      employees: {type: 'Number'}
     }
   });
 
@@ -75,14 +73,6 @@ describe('entityRouter', function () {
       investee: {type: 'Number'}
     }
   });
-
-  // entity JSON objects
-  var gtac = {Entity: 'Company', id: '00000000-0000-4000-a000-000000000111',
-    name: 'Gtac', employees: 30};
-  var back4app = {Entity: 'Startup', id: '00000000-0000-4000-a000-000000000222',
-    owner: 'Davi', investors: 10, fantasyName: 'back4app', employees: 4};
-  var monashees = {Entity: 'Investor', id: '00000000-0000-4000-a000-000000000333',
-    name: 'Monashees', investee: 20};
 
   // testing vars
   var mongoAdapter;
@@ -110,36 +100,36 @@ describe('entityRouter', function () {
   }
 
   function populateDatabase() {
-  	//mongodb documents
-  	var gtac_doc = {
-  		Entity: 'Company',
-  		_id: '00000000-0000-4000-a000-000000000111',
-    	name: 'Gtac',
-    	employees: 30
+    // mongodb documents
+    var gtacDoc = {
+      Entity: 'Company',
+      _id: '00000000-0000-4000-a000-000000000111',
+      fantasyName: 'Gtac',
+      employees: 30
     };
-    var back4app_doc = {
-    	Entity: 'Startup',
-    	_id: '00000000-0000-4000-a000-000000000222',
-    	owner: 'Davi',
-    	investors: 10,
-    	fantasyName: 'back4app',
-    	employees: 4
+    var monasheesDoc = {
+      Entity: 'Investor',
+      _id: '00000000-0000-4000-a000-000000000333',
+      name: 'Monashees',
+      investee: 20
     };
-    var monashees_doc = {
-    	Entity: 'Investor',
-    	_id: '00000000-0000-4000-a000-000000000333',
-    	name: 'Monashees',
-    	investee: 20
+    var back4appDoc = {
+      Entity: 'Startup',
+      _id: '00000000-0000-4000-a000-000000000222',
+      owner: 'Davi',
+      investors: [monasheesDoc],
+      fantasyName: 'back4app',
+      employees: 4
     };
 
     var defer = Promise.defer();
 
-    db.collection('Company').insertOne(gtac_doc).then(function(){
-    	return db.collection('Startup').insertOne(back4app_doc);
-    }).then(function(){
-    	db.collection('Investor').insertOne(monashees_doc);
-    	defer.resolve();
-    });
+    db.collection('Company')
+      .insertMany([gtacDoc, back4appDoc])
+      .then(function () {
+        db.collection('Investor').insertOne(monasheesDoc);
+        defer.resolve();
+      });
 
     return defer.promise;
   }
@@ -180,8 +170,87 @@ describe('entityRouter', function () {
   }
 
   describe('UPDATE /:entity/:id', function () {
-    it('should update', function () {
+
+    it('should update Entity', function () {
+      var postData = JSON.stringify({
+        employees: 40
+      });
+      var options = {
+        path: '/entities/Company/00000000-0000-4000-a000-000000000111'
+      };
+
+      return update(postData, options)
+        .then(function (res) {
+          expect(res).to.have.property('id');
+          expect(res.fantasyName).to.equal('Gtac');
+          expect(res.employees).to.equal(40);
+        });
+    });
+
+    it('should update Entity specialization by itself', function () {
+      var postData = JSON.stringify({
+        owner: 'Davi Macedo'
+      });
+      var options = {
+        path: '/entities/Startup/00000000-0000-4000-a000-000000000222'
+      };
+
+      return update(postData, options)
+        .then(function (res) {
+          expect(res).to.have.property('id');
+          expect(res.owner).to.equal('Davi Macedo');
+          expect(res.fantasyName).to.equal('back4app');
+          expect(res.employees).to.equal(4);
+          expect(res.investors.length).to.equal(1);
+        });
+    });
+
+    it('should update Entity specialization by superclass', function () {
+      var postData = JSON.stringify({
+        owner: 'Davi Macedo B4A'
+      });
+      var options = {
+        path: '/entities/Company/00000000-0000-4000-a000-000000000222'
+      };
+
+      return update(postData, options)
+        .then(function (res) {
+          expect(res).to.have.property('id');
+          expect(res.owner).to.equal('Davi Macedo B4A');
+          expect(res.fantasyName).to.equal('back4app');
+          expect(res.employees).to.equal(4);
+          expect(res.investors.length).to.equal(1);
+        });
+    });
+
+    it('should return 404 code on wrong entity', function () {
+      var postData = JSON.stringify({
+        owner: 'Davi Macedo B4A'
+      });
+      var options = {
+        path: '/entities/WrongEntity/00000000-0000-4000-a000-000000000222',
+        status: 404
+      };
+
+      return update(postData, options)
+        .then(function (res) {
+          expect(res).to.have.property('message');
+        });
+    });
+
+    it('should return 404 code on wrong id', function () {
+      var postData = JSON.stringify({
+        name: 'Fundação Lemann'
+      });
+      var options = {
+        path: '/entities/Investor/00000000-0000-4000-a000-000000000444',
+        status: 404
+      };
+
+      return update(postData, options)
+        .then(function (res) {
+          expect(res).to.have.property('message');
+        });
     });
   });
-
 });
