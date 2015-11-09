@@ -13,6 +13,26 @@ function entityRouter(entities, accessToken) {
   router.use(bodyParser.json());
 
   /**
+   * Adds an authentication handler to the express router. It checks for
+   * the `X-Access-Token` header and compares with the given token.
+   * @name module:back4app-rest.entities.entityRouter#auth
+   * @function
+   */
+  router.use(function auth(req, res, next) {
+    var token = req.headers['x-access-token'];
+    if (token === accessToken) {
+      // auth ok
+      next();
+    } else {
+      // invalid auth
+      res.status(401).json({
+        code: 0,
+        message: 'Invalid Auth Token'
+      });
+    }
+  });
+
+  /**
    * Adds an error handler to the express router. It returns
    * the message and error code.
    * @name module:back4app-rest.entities.entityRouter#get
