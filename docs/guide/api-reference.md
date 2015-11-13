@@ -87,6 +87,10 @@ Using the the parameter query, you will be able to send a query to filter the
 returned data, based on [MongoDB Query](https://docs.mongodb.org/manual/tutorial/query-documents/).
 Since the query receives a JSON, it must be URLEncoded before sent as parameter.
 
+```javascript
+{ "job" : "Doctor" }
+```
+
 ```http
 https://api.back4app.com/entities/Person/?query=%7B+%22job%22+%3A+%22Doctor%22+%7D
 ```
