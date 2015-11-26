@@ -4,6 +4,9 @@ var chai = require('chai');
 var expect = chai.expect;
 var express = require('express');
 var bodyParser = require('body-parser');
+var AssociationAttribute =
+  require('@back4app/back4app-entity').models.attributes
+    .types.AssociationAttribute;
 
 module.exports = entityRouter;
 
@@ -72,6 +75,23 @@ function entityRouter(entities, accessToken) {
     expect(Entity).to.be.a('function');
 
     var entity = new Entity(request.body);
+
+    // Replaces the Association ID for a Association Entity's Instance
+    for (var attrName in Entity.attributes) {
+      var attribute = Entity.attributes[attrName];
+      if (attribute instanceof AssociationAttribute) {
+        if (entity[attrName] instanceof Array) {
+          for (var i = 0; i < entity[attrName].length; i++) {
+            entity[attrName][i] = _createCleanInstance(
+              attribute.Entity, entity[attrName][i]);
+          }
+        } else {
+          entity[attrName] = _createCleanInstance(
+            attribute.Entity, entity[attrName]);
+        }
+      }
+    }
+
     entity.save().then(function () {
       response.status(201).json(_objectToDocument(entity));
     })
@@ -269,4 +289,12 @@ function _listEntityAndSpecifications(entityClass) {
     classes.push(className);
   }
   return classes;
+}
+
+function _createCleanInstance(Entity, id) {
+  return new Entity({
+    id: id
+  }, {
+    clean: true
+  });
 }
