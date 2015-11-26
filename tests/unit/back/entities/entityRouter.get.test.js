@@ -203,6 +203,14 @@ describe('entityRouter', function () {
         });
     });
 
+    it('should get entity by id, searching on parent class', function () {
+      return fetchJSON('/entities/Person/07fceb36-da60-4eb4-bdad-ee9c855e626b/')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals(matt);
+        });
+    });
+
     it('should return 404 code on wrong entity', function () {
       return fetchJSON('/entities/Wrong/0ca3c8c9-41a7-4967-a285-21f8cb4db2c0/')
         .then(function (res) {
@@ -212,6 +220,13 @@ describe('entityRouter', function () {
 
     it('should return 404 code on wrong id', function () {
       return fetchJSON('/entities/Person/00000000-0000-0000-0000-000000000000/')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(404);
+        });
+    });
+
+    it('should return 404 code on invalid id for specific entity', function () {
+      return fetchJSON('/entities/Author/0ca3c8c9-41a7-4967-a285-21f8cb4db2c0/')
         .then(function (res) {
           expect(res.statusCode).to.be.equals(404);
         });
