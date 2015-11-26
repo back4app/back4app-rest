@@ -69,6 +69,10 @@ describe('entityRouter', function () {
     }
   });
 
+  var FictionAuthor = Author.specify({
+    name: 'FictionAuthor'
+  });
+
   var Book = Entity.specify({
     name: 'Book',
     attributes: {
@@ -78,12 +82,33 @@ describe('entityRouter', function () {
   });
 
   // entity JSON objects
-  var john = {Entity: 'Person', id: '0ca3c8c9-41a7-4967-a285-21f8cb4db2c0',
-    name: 'John', age: 30, married: true};
-  var theo = {Entity: 'Person', id: '5c2ca70f-d51a-4c97-a3ea-1668bde10fe7',
-    name: 'Theo', age: 20, married: false};
-  var will = {Entity: 'Person', id: 'd609db0b-b1f4-421a-a5f2-df8934ab023f',
-    name: 'Will', age: 30, married: false};
+  // Person
+  var john = {
+    id: '0ca3c8c9-41a7-4967-a285-21f8cb4db2c0', Entity: 'Person',
+    name: 'John', age: 30, married: true
+  };
+  var theo = {
+    id: '5c2ca70f-d51a-4c97-a3ea-1668bde10fe7', Entity: 'Person',
+    name: 'Theo', age: 20, married: false
+  };
+  var will = {
+    id: 'd609db0b-b1f4-421a-a5f2-df8934ab023f', Entity: 'Person',
+    name: 'Will', age: 30, married: false
+  };
+  // Author
+  var greg = {
+    id: 'fbab76bb-92c2-4aa8-bdd7-364430d0274b', Entity: 'Author',
+    name: 'Greg', age: 21, married: false, readers: 1000, books: null
+  };
+  // FictionAuthor
+  var matt = {
+    id: '07fceb36-da60-4eb4-bdad-ee9c855e626b', Entity: 'FictionAuthor',
+    name: 'Matt', age: 22, married: false, readers: 2000, books: null
+  };
+  var phil = {
+    id: 'a42ecb21-417e-470a-b8ca-1e54f04f8e01', Entity: 'FictionAuthor',
+    name: 'Phil', age: 23, married: true, readers: 3000, books: null
+  };
 
 
   // testing vars
@@ -113,12 +138,21 @@ describe('entityRouter', function () {
 
   function populateDatabase() {
     return db.collection('Person').insertMany([
+      // Person
       {Entity: 'Person', _id: '0ca3c8c9-41a7-4967-a285-21f8cb4db2c0',
         name: 'John', age: 30, married: true},
       {Entity: 'Person', _id: '5c2ca70f-d51a-4c97-a3ea-1668bde10fe7',
         name: 'Theo', age: 20, married: false},
       {Entity: 'Person', _id: 'd609db0b-b1f4-421a-a5f2-df8934ab023f',
-        name: 'Will', age: 30, married: false}
+        name: 'Will', age: 30, married: false},
+      // Author
+      {Entity: 'Author', _id: 'fbab76bb-92c2-4aa8-bdd7-364430d0274b',
+        name: 'Greg', age: 21, married: false, readers: 1000},
+      // FictionAuthor
+      {Entity: 'FictionAuthor', _id: '07fceb36-da60-4eb4-bdad-ee9c855e626b',
+        name: 'Matt', age: 22, married: false, readers: 2000},
+      {Entity: 'FictionAuthor', _id: 'a42ecb21-417e-470a-b8ca-1e54f04f8e01',
+        name: 'Phil', age: 23, married: true, readers: 3000}
     ]);
   }
 
@@ -126,6 +160,7 @@ describe('entityRouter', function () {
     var router = entityRouter({
       Person: Person,
       Author: Author,
+      FictionAuthor: FictionAuthor,
       Book: Book
     }, 'test_access_token');
 
@@ -168,6 +203,14 @@ describe('entityRouter', function () {
         });
     });
 
+    it('should get entity by id, searching on parent class', function () {
+      return fetchJSON('/entities/Person/07fceb36-da60-4eb4-bdad-ee9c855e626b/')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals(matt);
+        });
+    });
+
     it('should return 404 code on wrong entity', function () {
       return fetchJSON('/entities/Wrong/0ca3c8c9-41a7-4967-a285-21f8cb4db2c0/')
         .then(function (res) {
@@ -182,6 +225,13 @@ describe('entityRouter', function () {
         });
     });
 
+    it('should return 404 code on invalid id for specific entity', function () {
+      return fetchJSON('/entities/Author/0ca3c8c9-41a7-4967-a285-21f8cb4db2c0/')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(404);
+        });
+    });
+
   });
 
   describe('GET /:entity/', function () {
@@ -191,7 +241,7 @@ describe('entityRouter', function () {
         .then(function (res) {
           expect(res.statusCode).to.be.equals(200);
           expect(res.json).to.be.deep.equals({
-            results: [john, theo, will]
+            results: [john, theo, will, greg, matt, phil]
           });
         });
     });
@@ -208,6 +258,40 @@ describe('entityRouter', function () {
           expect(res.statusCode).to.be.equals(200);
           expect(res.json).to.be.deep.equals({
             results: [john, will]
+          });
+        });
+    });
+
+    it('should find entities using middle class in hierarchy', function () {
+      return fetchJSON('/entities/Author/')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals({
+            results: [greg, matt, phil]
+          });
+        });
+    });
+
+    it('should find entities by most specific class', function () {
+      return fetchJSON('/entities/FictionAuthor/')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals({
+            results: [matt, phil]
+          });
+        });
+    });
+
+    it('should find entities by query on more specific class', function () {
+      var query = JSON.stringify({
+        married: true
+      });
+      var url = '/entities/Author/?query=' + encodeURIComponent(query);
+      return fetchJSON(url)
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals({
+            results: [phil]
           });
         });
     });
