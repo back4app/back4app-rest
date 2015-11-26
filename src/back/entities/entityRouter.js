@@ -104,7 +104,14 @@ function entityRouter(entities, accessToken) {
 
     var Entity = entities[entityName];
 
-    Entity.get({id: id})
+    // create query to filter by id and match only current entity and
+    // it's specifications
+    var query = {
+      id: id,
+      Entity: {$in: _listEntityAndSpecifications(Entity)}
+    };
+
+    Entity.get(query)
       .then(function (entity) {
         res.json(_objectToDocument(entity));
       })
@@ -142,6 +149,9 @@ function entityRouter(entities, accessToken) {
       var queryStr = req.query.query;
       query = JSON.parse(decodeURIComponent(queryStr));
     }
+
+    // update query to match only current entity and it's specifications
+    query.Entity = {$in: _listEntityAndSpecifications(Entity)};
 
     Entity.find(query)
       .then(function (entities) {
@@ -199,7 +209,7 @@ function entityRouter(entities, accessToken) {
       });
   });
 
-  /*
+  /**
    * Adds a handler to the express router (DELETE /:entity/:id/). The handler
    * returns a description of error if it occurred.
    * @name module:back4app-rest.entities.entityRouter#_delete
@@ -251,4 +261,12 @@ function _objectToDocument(entityObject) {
   document.Entity = entityObject.Entity.specification.name;
 
   return document;
+}
+
+function _listEntityAndSpecifications(entityClass) {
+  var classes = [entityClass.specification.name];
+  for (var className in entityClass.specializations) {
+    classes.push(className);
+  }
+  return classes;
 }
