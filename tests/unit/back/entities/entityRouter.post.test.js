@@ -59,6 +59,15 @@ describe('entityRouter', function () {
     }
   });
 
+  var CityHurricane = Entity.specify({
+    name: 'CityHurricane',
+    attributes: {
+      hurricane: { type: 'Hurricane', multiplicity: '1', default: undefined },
+      area: { type: 'String', multiplicity: '1', default: undefined },
+      deaths: { type: 'Number', multiplicity: '1', default: undefined }
+    }
+  });
+
   // testing vars
   var mongoAdapter;
   var db;
@@ -86,7 +95,8 @@ describe('entityRouter', function () {
 
   function startAPI() {
     var router = entityRouter({
-      Hurricane: Hurricane
+      Hurricane: Hurricane,
+      CityHurricane: CityHurricane
     }, 'test_access_token');
 
     var app = express();
@@ -185,4 +195,42 @@ describe('entityRouter', function () {
         expect(res).to.have.property('message');
       });
   });
+
+  it('should create an Entity\'s instance', function () {
+    var postData = JSON.stringify({
+      'name': 'Katrina',
+      'category': 3
+    });
+
+    var hurricaneID;
+
+    return post(postData)
+      .then(function (res) {
+        expect(res).to.have.property('id');
+        expect(res.name).to.equal('Katrina');
+        expect(res.category).to.equal(3);
+
+        hurricaneID = res.id;
+
+        var postData = JSON.stringify({
+          'hurricane': hurricaneID,
+          'area': 'Louisiana',
+          'deaths': 1836
+        });
+
+        return post(postData, {
+          path: '/entities/CityHurricane'
+        });
+
+      })
+      .then(function (res) {
+        expect(res).to.have.property('id');
+        expect(res.area).to.equal('Louisiana');
+        expect(res.deaths).to.equal(1836);
+        expect(res).to.have.property('hurricane');
+        expect(res.hurricane.Entity).to.equal('Hurricane');
+        expect(res.hurricane.id).to.equal(hurricaneID);
+      });
+  });
+
 });

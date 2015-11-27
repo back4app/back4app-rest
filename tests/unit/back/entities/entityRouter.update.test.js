@@ -117,7 +117,7 @@ describe('entityRouter', function () {
       Entity: 'Startup',
       _id: '00000000-0000-4000-a000-000000000222',
       owner: 'Davi',
-      investors: [monasheesDoc],
+      investors: [monasheesDoc._id],
       fantasyName: 'back4app',
       employees: 4
     };
