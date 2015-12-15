@@ -294,6 +294,8 @@ function _replaceAssociationInAttributes(Entity, entity) {
         entity[attrName] = _createCleanInstance(
           attribute.Entity, entity[attrName]);
       }
+    } else if (attrName !== 'id') {
+      entity[attrName] = attribute.parseDataValue(entity[attrName]);
     }
   }
 }
