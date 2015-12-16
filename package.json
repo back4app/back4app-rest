@@ -37,7 +37,7 @@
     "mongodb": "^2.0.47"
   },
   "dependencies": {
-    "@back4app/back4app-entity": "^1.0.8",
+    "@back4app/back4app-entity": "^1.0.10",
     "bluebird": "^3.0.5",
     "body-parser": "^1.14.1",
     "express": "^4.13.3"
