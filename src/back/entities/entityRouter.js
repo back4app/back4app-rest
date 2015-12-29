@@ -303,7 +303,7 @@ function _replaceAssociationInAttributes(Entity, entity) {
 function _createCleanInstance(Entity, id) {
   var stringID;
   if (typeof id === 'string') {
-   stringID = id;
+    stringID = id;
   } else {
     stringID = id.id;
   }
