@@ -233,4 +233,43 @@ describe('entityRouter', function () {
       });
   });
 
+  it('should create an Entity\'s instance that has id as an object' +
+      'when it is an association', function () {
+    var postData = JSON.stringify({
+      'name': 'Katrina',
+      'category': 3
+    });
+
+    var hurricaneID;
+
+    return post(postData)
+        .then(function (res) {
+          expect(res).to.have.property('id');
+          expect(res.name).to.equal('Katrina');
+          expect(res.category).to.equal(3);
+
+          hurricaneID = {id: res.id};
+
+          var postData = JSON.stringify({
+            'hurricane': hurricaneID,
+            'area': 'Louisiana',
+            'deaths': 1836
+          });
+
+          return post(postData, {
+            path: '/entities/CityHurricane'
+          });
+
+        })
+        .then(function (res) {
+          expect(res).to.have.property('id');
+          expect(res.area).to.equal('Louisiana');
+          expect(res.deaths).to.equal(1836);
+          expect(res).to.have.property('hurricane');
+          expect(res.hurricane.Entity).to.equal('Hurricane');
+          expect(res.hurricane.id).to.equal(hurricaneID.id);
+        });
+  });
+
+
 });

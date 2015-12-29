@@ -76,7 +76,7 @@ function entityRouter(entities, accessToken) {
 
     var entity = new Entity(request.body);
 
-    // Replaces the Association ID for a Association Entity's Instance
+    // Replaces the Association ID with an Association Entity's Instance
     _replaceAssociationInAttributes(Entity, entity);
 
     entity.save().then(function () {
@@ -301,8 +301,14 @@ function _replaceAssociationInAttributes(Entity, entity) {
 }
 
 function _createCleanInstance(Entity, id) {
+  var stringID;
+  if (typeof id === 'string') {
+   stringID = id;
+  } else {
+    stringID = id.id;
+  }
   return new Entity({
-    id: id
+    id: stringID
   }, {
     clean: true
   });
