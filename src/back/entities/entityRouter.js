@@ -157,6 +157,22 @@ function entityRouter(entities, accessToken) {
       query = JSON.parse(decodeURIComponent(queryStr));
     }
 
+    // update query to get pagination
+    var page = 0, per_page = 2, skip = 0, pageSizeMax = 100;
+    if (req.query.hasOwnProperty('page')) {
+      page = parseInt(req.query.page);
+      if (req.query.hasOwnProperty('per_page') && per_page <= pageSizeMax) {
+        per_page = parseInt(req.query.per_page);
+      }
+      skip = (page - 1) * per_page;
+      query.skip = skip;
+      query.limit = per_page;
+    } else if (req.query.hasOwnProperty('per_page') && per_page <= pageSizeMax) {
+      per_page = parseInt(req.query.per_page);
+      query.skip = skip;
+      query.limit = per_page;
+    }
+
     // update query to match only current entity and it's specifications
     query.Entity = {$in: _listEntityAndSpecifications(Entity)};
 
