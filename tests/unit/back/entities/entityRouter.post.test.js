@@ -144,6 +144,17 @@ describe('entityRouter', function () {
           expect(res.category).to.equal(5);
         });
     });
+
+    it('should return error on invalid JSON body', function () {
+      var postData = 'invalid json';
+      return post(postData, {status: 400})
+        .then(function (res) {
+          expect(res).to.be.deep.equals({
+            code: 102,
+            error: 'Invalid JSON'
+          });
+        });
+    });
   });
 
   it('should not create an Entity\'s' +
@@ -157,23 +168,6 @@ describe('entityRouter', function () {
     return post(postData, {
       path: '/entities/wrongEntity',
       status: 404
-    })
-      .then(function (res) {
-        expect(res).to.have.property('message');
-      });
-  });
-
-  it('should not create an Entity\'s' +
-    ' instance with invalid body', function () {
-    var postData = JSON.stringify({
-      'name': 'Wilma',
-      //'date': new Date('2005'),
-      'category': 5
-    });
-
-    return post(postData, {
-      status: 400,
-      invalidJSON: true
     })
       .then(function (res) {
         expect(res).to.have.property('message');
@@ -270,6 +264,5 @@ describe('entityRouter', function () {
           expect(res.hurricane.id).to.equal(hurricaneID.id);
         });
   });
-
 
 });

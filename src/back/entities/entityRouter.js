@@ -45,11 +45,19 @@ function entityRouter(entities, accessToken) {
     if (!err) {
       next();
     } else {
-      res.status(err.status || 500)
-        .json({
-          code: 0,
-          message: err.message
+      if (err instanceof SyntaxError) {
+        // malformed JSON on body
+        res.status(400).json({
+          code: 102,
+          error: 'Invalid JSON'
         });
+      } else {
+        res.status(err.status || 500)
+          .json({
+            code: 0,
+            error: err.message
+          });
+      }
     }
   });
 
