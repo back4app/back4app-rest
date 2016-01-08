@@ -303,5 +303,18 @@ describe('entityRouter', function () {
         });
     });
 
+    it('should return error on invalid query', function () {
+      var query = encodeURIComponent('invalid query');
+      var url = '/entities/Person/?query=' + encodeURIComponent(query);
+      return fetchJSON(url)
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(400);
+          expect(res.json).to.be.deep.equals({
+            code: 101,
+            error: 'Invalid Query'
+          });
+        });
+    });
+
   });
 });

@@ -154,7 +154,15 @@ function entityRouter(entities, accessToken) {
     if (req.query.hasOwnProperty('query')) {
       // decode query's "query" param
       var queryStr = req.query.query;
-      query = JSON.parse(decodeURIComponent(queryStr));
+      try {
+        query = JSON.parse(decodeURIComponent(queryStr));
+      } catch (e) {
+        res.status(400).json({
+          code: 101,
+          error: 'Invalid Query'
+        });
+        return;
+      }
     }
 
     // update query to match only current entity and it's specifications
