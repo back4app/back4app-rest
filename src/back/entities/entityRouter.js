@@ -49,10 +49,11 @@ function entityRouter(entities, accessToken) {
   router.post('/:entity/', function (request, response) {
     var entityName = request.params.entity;
 
+    // check for errors
     if (!entities.hasOwnProperty(entityName)) {
       response.status(404).json({
-        code: 0,
-        message: 'Entity not defined'
+        code: 122,
+        error: 'Entity Not Found'
       });
       return;
     }
@@ -101,8 +102,8 @@ function entityRouter(entities, accessToken) {
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
       res.status(404).json({
-        code: 0,
-        message: 'Entity not defined'
+        code: 122,
+        error: 'Entity Not Found'
       });
       return;
     }
@@ -140,8 +141,8 @@ function entityRouter(entities, accessToken) {
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
       res.status(404).json({
-        code: 0,
-        message: 'Entity not defined'
+        code: 122,
+        error: 'Entity Not Found'
       });
       return;
     }
@@ -195,8 +196,8 @@ function entityRouter(entities, accessToken) {
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
       response.status(404).json({
-        code: 0,
-        message: 'Entity not defined'
+        code: 122,
+        error: 'Entity Not Found'
       });
       return;
     }
@@ -248,17 +249,19 @@ function entityRouter(entities, accessToken) {
    * @function
    */
   router.delete('/:entity/:id/', function _delete(request, response) {
-    //check for errors
-    if (!entities.hasOwnProperty(request.params.entity)) {
-      response.status(400).json({
-        message: 'Entity is not defined',
-        code: 0
+    var entityName = request.params.entity;
+    var id = request.params.id;
+
+    // check for errors
+    if (!entities.hasOwnProperty(entityName)) {
+      response.status(404).json({
+        code: 122,
+        error: 'Entity Not Found'
       });
       return;
     }
 
-    var Entity = entities[request.params.entity];
-    var id = request.params.id;
+    var Entity = entities[entityName];
     var entity = new Entity({id: id});
 
     entity.delete()

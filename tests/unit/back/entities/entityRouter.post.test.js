@@ -170,23 +170,24 @@ describe('entityRouter', function () {
           });
         });
     });
-  });
 
-  it('should not create an Entity\'s' +
-    ' instance with wrong path', function () {
-    var postData = JSON.stringify({
-      'name': 'Wilma',
-      //'date': new Date('2005'),
-      'category': 5
-    });
-
-    return post(postData, {
-      path: '/entities/wrongEntity',
-      status: 404
-    })
-      .then(function (res) {
-        expect(res).to.have.property('message');
+    it('should not create an instance with wrong entity name', function () {
+      var postData = JSON.stringify({
+        'name': 'Wilma',
+        'category': 5
       });
+
+      return post(postData, {
+        path: '/entities/wrongEntity',
+        status: 404
+      })
+        .then(function (res) {
+          expect(res).to.be.deep.equals({
+            code: 122,
+            error: 'Entity Not Found'
+          });
+        });
+    });
   });
 
   it('should create an Entity\'s instance', function () {

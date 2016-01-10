@@ -234,7 +234,10 @@ describe('entityRouter', function () {
 
       return update(postData, options)
         .then(function (res) {
-          expect(res).to.have.property('message');
+          expect(res).to.be.deep.equals({
+            code: 122,
+            error: 'Entity Not Found'
+          });
         });
     });
 

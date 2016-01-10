@@ -300,6 +300,10 @@ describe('entityRouter', function () {
       return fetchJSON('/entities/Wrong/')
         .then(function (res) {
           expect(res.statusCode).to.be.equals(404);
+          expect(res.json).to.be.deep.equals({
+            code: 122,
+            error: 'Entity Not Found'
+          });
         });
     });
 
