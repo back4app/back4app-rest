@@ -25,16 +25,21 @@ function entityRouter(entities, accessToken) {
    * @function
    */
   router.use(function auth(req, res, next) {
-    var token = req.headers['x-access-token'];
-    if (token === accessToken) {
-      // auth ok
-      next();
-    } else {
+    var token = req.get('X-Access-Token');
+    if (token === undefined) {
+      res.status(401).json({
+        code: 112,
+        error: 'Access Token Missing'
+      });
+    } else if (token !== accessToken) {
       // invalid auth
       res.status(401).json({
-        code: 0,
-        message: 'Invalid Auth Token'
+        code: 113,
+        error: 'Invalid API Credentials'
       });
+    } else {
+      // auth ok
+      next();
     }
   });
 
