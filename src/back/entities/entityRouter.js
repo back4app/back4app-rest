@@ -123,8 +123,8 @@ function entityRouter(entities, accessToken) {
       })
       .catch(function () {
         res.status(404).json({
-          code: 0,
-          message: 'Entity not found'
+          code: 123,
+          error: 'Object Not Found'
         });
       });
   });
@@ -224,8 +224,8 @@ function entityRouter(entities, accessToken) {
       .catch(function (err) {
         if (err instanceof QueryError) {
           response.status(404).json({
-            code: 122,
-            error: 'Entity Not Found'
+            code: 123,
+            error: 'Object Not Found'
           });
         } else if (err instanceof ValidationError) {
           response.status(400).json({
@@ -269,9 +269,9 @@ function entityRouter(entities, accessToken) {
         response.status(204).end();
       })
       .catch(function () {
-        response.status(404).json({
-          message: 'Internal error',
-          code: 0
+        response.status(500).json({
+          code: 1,
+          error: 'Internal Server Error'
         });
       });
   });

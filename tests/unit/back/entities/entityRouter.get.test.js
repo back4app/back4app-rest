@@ -215,6 +215,10 @@ describe('entityRouter', function () {
       return fetchJSON('/entities/Wrong/0ca3c8c9-41a7-4967-a285-21f8cb4db2c0/')
         .then(function (res) {
           expect(res.statusCode).to.be.equals(404);
+          expect(res.json).to.be.deep.equals({
+            code: 122,
+            error: 'Entity Not Found'
+          });
         });
     });
 
@@ -222,6 +226,10 @@ describe('entityRouter', function () {
       return fetchJSON('/entities/Person/00000000-0000-0000-0000-000000000000/')
         .then(function (res) {
           expect(res.statusCode).to.be.equals(404);
+          expect(res.json).to.be.deep.equals({
+            code: 123,
+            error: 'Object Not Found'
+          });
         });
     });
 
