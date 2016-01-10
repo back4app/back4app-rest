@@ -16,6 +16,8 @@ function entityRouter(entities, accessToken) {
 
   router.use(bodyParser.json());
 
+  /* Middlewares come first */
+
   /**
    * Adds an authentication handler to the express router. It checks for
    * the `X-Access-Token` header and compares with the given token.
@@ -36,31 +38,7 @@ function entityRouter(entities, accessToken) {
     }
   });
 
-  /**
-   * Adds an error handler to the express router. It returns
-   * the message and error code.
-   * @name module:back4app-rest.entities.entityRouter#get
-   * @function
-   */
-  router.use(function (err, req, res, next) {
-    if (!err) {
-      next();
-    } else {
-      if (err instanceof SyntaxError) {
-        // malformed JSON on body
-        res.status(400).json({
-          code: 102,
-          error: 'Invalid JSON'
-        });
-      } else {
-        res.status(err.status || 500)
-          .json({
-            code: 0,
-            error: err.message
-          });
-      }
-    }
-  });
+  /* Then routes are defined */
 
   /**
    * Adds a handler to the express router (POST /:entity/). It returns
@@ -293,6 +271,33 @@ function entityRouter(entities, accessToken) {
           code: 0
         });
       });
+  });
+
+  /* Error handler comes as last middleware */
+
+  /**
+   * Adds an error handler to the express router. It returns
+   * the message and error code.
+   * @name module:back4app-rest.entities.entityRouter#get
+   * @function
+   */
+  router.use(function (err, req, res, next) {
+    if (!err) {
+      next();
+    } else {
+      if (err instanceof SyntaxError) {
+        // malformed JSON on body
+        res.status(400).json({
+          code: 102,
+          error: 'Invalid JSON'
+        });
+      } else {
+        res.status(500).json({
+          code: 1,
+          error: 'Internal Server Error'
+        });
+      }
+    }
   });
 
   return router;
