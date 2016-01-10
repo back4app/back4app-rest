@@ -273,6 +273,15 @@ function entityRouter(entities, accessToken) {
       });
   });
 
+  /* 404 handler is the last non-error middleware */
+
+  router.use(function(req, res, next) {
+    res.status(404).json({
+      code: 121,
+      error: 'URL Not Found'
+    });
+  });
+
   /* Error handler comes as last middleware */
 
   /**
