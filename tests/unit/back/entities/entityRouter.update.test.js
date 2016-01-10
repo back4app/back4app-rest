@@ -249,7 +249,29 @@ describe('entityRouter', function () {
 
       return update(postData, options)
         .then(function (res) {
-          expect(res).to.have.property('message');
+          expect(res).to.be.deep.equals({
+            code: 122,
+            error: 'Entity Not Found'
+          });
+        });
+    });
+
+    it('should not update instance with invalid attributes', function () {
+      var postData = JSON.stringify({
+        fantasyName: 0, // should be String
+        employees: '' // should be Number
+      });
+      var options = {
+        path: '/entities/Company/00000000-0000-4000-a000-000000000111',
+        status: 400
+      };
+
+      return update(postData, options)
+        .then(function (res) {
+          expect(res).to.be.deep.equals({
+            code: 103,
+            error: 'Invalid Entity'
+          });
         });
     });
   });

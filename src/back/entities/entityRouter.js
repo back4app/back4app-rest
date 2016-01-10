@@ -4,9 +4,10 @@ var chai = require('chai');
 var expect = chai.expect;
 var express = require('express');
 var bodyParser = require('body-parser');
-var AssociationAttribute =
-  require('@back4app/back4app-entity').models.attributes
-    .types.AssociationAttribute;
+var entity = require('@back4app/back4app-entity');
+var AssociationAttribute = entity.models.attributes.types.AssociationAttribute;
+var ValidationError = entity.models.errors.ValidationError;
+var QueryError = require('@back4app/back4app-entity-mongodb').errors.QueryError;
 
 module.exports = entityRouter;
 
@@ -86,6 +87,17 @@ function entityRouter(entities, accessToken) {
 
     // Replaces the Association ID with an Association Entity's Instance
     _replaceAssociationInAttributes(Entity, entity);
+
+    // validate entity
+    try {
+      entity.validate();
+    } catch (e) {
+      response.status(400).json({
+        code: 103,
+        error: 'Invalid Entity'
+      });
+      return;
+    }
 
     entity.save().then(function () {
       response.status(201).json(_objectToDocument(entity));
@@ -223,15 +235,31 @@ function entityRouter(entities, accessToken) {
         // Replaces the Association ID for a Association Entity's Instance
         _replaceAssociationInAttributes(Entity, entity);
 
-        entity.save().then(function () {
+        // validate entity
+        entity.validate();
+
+        return entity.save().then(function () {
           response.status(200).json(_objectToDocument(entity));
         });
       })
-      .catch(function () {
-        response.status(404).json({
-          code: 0,
-          message: 'Entity not found'
-        });
+      .catch(function (err) {
+        if (err instanceof QueryError) {
+          response.status(404).json({
+            code: 122,
+            error: 'Entity Not Found'
+          });
+        } else if (err instanceof ValidationError) {
+          response.status(400).json({
+            code: 103,
+            error: 'Invalid Entity'
+          });
+        } else {
+          // error not treated
+          response.status(500).json({
+            code: 1,
+            error: 'Internal Server Error'
+          });
+        }
       });
   });
 

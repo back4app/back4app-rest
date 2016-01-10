@@ -155,6 +155,21 @@ describe('entityRouter', function () {
           });
         });
     });
+
+    it('should not create an instance with invalid attributes', function () {
+      var postData = JSON.stringify({
+        'name': 0, // should be String
+        'category': '' // should be Number
+      });
+
+      return post(postData, {status: 400})
+        .then(function (res) {
+          expect(res).to.be.deep.equals({
+            code: 103,
+            error: 'Invalid Entity'
+          });
+        });
+    });
   });
 
   it('should not create an Entity\'s' +
@@ -168,22 +183,6 @@ describe('entityRouter', function () {
     return post(postData, {
       path: '/entities/wrongEntity',
       status: 404
-    })
-      .then(function (res) {
-        expect(res).to.have.property('message');
-      });
-  });
-
-  it('should not create an Entity\'s' +
-    ' instance with invalid Entity attributes', function () {
-    var postData = JSON.stringify({
-      'name': 0,
-      //'date': new Date('2005'),
-      'category': ''
-    });
-
-    return post(postData, {
-      status: 400
     })
       .then(function (res) {
         expect(res).to.have.property('message');
