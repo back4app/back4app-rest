@@ -147,7 +147,7 @@ describe('entityRouter', function () {
             'X-Access-Token': 'test_access_token'
           }
         }, function (response) {
-          expect(response.statusCode).to.equal(400);
+          expect(response.statusCode).to.equal(404);
           done();
         });
 

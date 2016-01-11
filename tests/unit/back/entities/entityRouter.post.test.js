@@ -144,56 +144,50 @@ describe('entityRouter', function () {
           expect(res.category).to.equal(5);
         });
     });
-  });
 
-  it('should not create an Entity\'s' +
-    ' instance with wrong path', function () {
-    var postData = JSON.stringify({
-      'name': 'Wilma',
-      //'date': new Date('2005'),
-      'category': 5
+    it('should return error on invalid JSON body', function () {
+      var postData = 'invalid json';
+      return post(postData, {status: 400})
+        .then(function (res) {
+          expect(res).to.be.deep.equals({
+            code: 102,
+            error: 'Invalid JSON'
+          });
+        });
     });
 
-    return post(postData, {
-      path: '/entities/wrongEntity',
-      status: 404
-    })
-      .then(function (res) {
-        expect(res).to.have.property('message');
+    it('should not create an instance with invalid attributes', function () {
+      var postData = JSON.stringify({
+        'name': 0, // should be String
+        'category': '' // should be Number
       });
-  });
 
-  it('should not create an Entity\'s' +
-    ' instance with invalid body', function () {
-    var postData = JSON.stringify({
-      'name': 'Wilma',
-      //'date': new Date('2005'),
-      'category': 5
+      return post(postData, {status: 400})
+        .then(function (res) {
+          expect(res).to.be.deep.equals({
+            code: 103,
+            error: 'Invalid Entity'
+          });
+        });
     });
 
-    return post(postData, {
-      status: 400,
-      invalidJSON: true
-    })
-      .then(function (res) {
-        expect(res).to.have.property('message');
+    it('should not create an instance with wrong entity name', function () {
+      var postData = JSON.stringify({
+        'name': 'Wilma',
+        'category': 5
       });
-  });
 
-  it('should not create an Entity\'s' +
-    ' instance with invalid Entity attributes', function () {
-    var postData = JSON.stringify({
-      'name': 0,
-      //'date': new Date('2005'),
-      'category': ''
+      return post(postData, {
+        path: '/entities/wrongEntity',
+        status: 404
+      })
+        .then(function (res) {
+          expect(res).to.be.deep.equals({
+            code: 122,
+            error: 'Entity Not Found'
+          });
+        });
     });
-
-    return post(postData, {
-      status: 400
-    })
-      .then(function (res) {
-        expect(res).to.have.property('message');
-      });
   });
 
   it('should create an Entity\'s instance', function () {
@@ -270,6 +264,5 @@ describe('entityRouter', function () {
           expect(res.hurricane.id).to.equal(hurricaneID.id);
         });
   });
-
 
 });
