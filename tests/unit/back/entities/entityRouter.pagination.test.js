@@ -6,6 +6,7 @@ var expect = require('chai').expect;
 var mongodb = require('mongodb');
 var express = require('express');
 var Promise = require('bluebird');
+var uuid = require('node-uuid');
 var entity = require('@back4app/back4app-entity');
 var Entity = entity.models.Entity;
 
@@ -76,36 +77,6 @@ describe('entityRouter', function () {
     }
   });
 
-  // entity JSON objects
-  // City
-  var sjc = {
-    id: '6450bde9-dd9c-4526-9bb3-220151107666', Entity: 'City',
-    name: 'Sjc', streets: 3000
-  };
-  var sp = {
-    id: '1ce70737-340b-4144-9600-999146819377', Entity: 'City',
-    name: 'Sp', streets: 10000
-  };
-  var rj = {
-    id: 'd7ea825b-a64e-45f5-ac35-1b69fe5dde9b', Entity: 'City',
-    name: 'Rj', streets: 8000
-  };
-  // District
-  var centro = {
-    id: 'fbab76bb-92c2-4aa8-bdd7-364430d0274b', Entity: 'District',
-    name: 'Centro', streets:800, type: 1000, houses: null
-  };
-  var aquarius = {
-    id: '7ef2d5e1-c87c-4441-bd93-66a650037b0a', Entity: 'District',
-    name: 'Aquarius', streets:500, type: 1000, houses: null
-  };
-  var satelite = {
-    id: '938ce1b2-fcab-4122-acd8-22eb039eb61d', Entity: 'District',
-    name: 'Satelite', streets: 400, type: 1000, houses: null
-  };
-  // House
-
-
   // testing vars
   var mongoAdapter;
   var db;
@@ -132,22 +103,18 @@ describe('entityRouter', function () {
   }
 
   function populateDatabase() {
-    return db.collection('City').insertMany([
-      // City
-      {Entity: 'City', _id: '6450bde9-dd9c-4526-9bb3-220151107666',
-        name: 'Sjc', streets: 3000},
-      {Entity: 'City', _id: '1ce70737-340b-4144-9600-999146819377',
-        name: 'Sp', streets: 10000},
-      {Entity: 'City', _id: 'd7ea825b-a64e-45f5-ac35-1b69fe5dde9b',
-        name: 'Rj', streets: 8000},
-      // District
-      {Entity: 'District', _id: 'fbab76bb-92c2-4aa8-bdd7-364430d0274b',
-        name: 'Centro', streets:800, type: 1000, houses: null},
-      {Entity: 'District', _id: '07fceb36-da60-4eb4-bdad-ee9c855e626b',
-        name: 'Aquarius', streets:500, type: 1000, houses: null},
-      {Entity: 'District', _id: '938ce1b2-fcab-4122-acd8-22eb039eb61d',
-        name: 'Satelite', streets: 400, type: 1000, houses: null}
-    ]);
+    var cityDocuments = [];
+    for (var i=1; i <= 150; i++) {
+      var aux = {};
+      aux.Entity = 'City';
+      aux._id = uuid.v4();
+      aux.name = 'City' + i;
+      aux.streets = i <= 50 ? 3000 : 10000;
+      cityDocuments.push(aux);
+    }
+
+    return db.collection('City').insertMany(cityDocuments);
+
   }
 
   function startAPI() {
@@ -186,17 +153,48 @@ describe('entityRouter', function () {
   }
 
   // test cases
-  describe('Pagination request with page and per_page', function () {
+  describe('Pagination requests and responses with big database', function () {
 
-    it.only('should return only the first two cities', function () {
-      return fetchJSON('/entities/City?page=0&per_page=2')
+    it('should return only the first 50 cities', function () {
+      return fetchJSON('/entities/City?skip=0&limit=50')
         .then(function (res) {
           expect(res.statusCode).to.be.equals(200);
-          expect(res.json).to.be.deep.equals({
-            results: [sjc, sp]
-          });
+          expect(res.json.results).to.have.length(50);
         });
     });
+
+    it('should skip the first 100 cities and return only 50', function () {
+      return fetchJSON('/entities/City?skip=100&limit=50')
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(200);
+            expect(res.json.results).to.have.length(50);
+          });
+    });
+
+    it('should return pagination with MAX_LIMIT', function () {
+      return fetchJSON('/entities/City?limit=200')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json.results).to.have.length(100);
+        });
+    });
+
+    it('should use default params pagination with wrong params', function () {
+      return fetchJSON('/entities/City?skip=a&limit=b')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json.results).to.have.length(30);
+        });
+    });
+
+    it('should use default params pagination with wrong params', function () {
+      return fetchJSON('/entities/City?skip=-1&limit=-2')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json.results).to.have.length(30);
+        });
+    });
+
   });
 
 });
