@@ -9,39 +9,18 @@ var AssociationAttribute = entity.models.attributes.types.AssociationAttribute;
 var ValidationError = entity.models.errors.ValidationError;
 var QueryError = require('@back4app/back4app-entity-mongodb').errors.QueryError;
 
+var authentication = require('../middlewares/authentication');
+var notfound = require('../middlewares/notfound');
+var error = require('../middlewares/error');
+
 module.exports = entityRouter;
 
 function entityRouter(entities, accessToken) {
   var router = express.Router();
 
-  router.use(bodyParser.json());
-
   /* Middlewares come first */
-
-  /**
-   * Adds an authentication handler to the express router. It checks for
-   * the `X-Access-Token` header and compares with the given token.
-   * @name module:back4app-rest.entities.entityRouter#auth
-   * @function
-   */
-  router.use(function auth(req, res, next) {
-    var token = req.get('X-Access-Token');
-    if (token === undefined) {
-      res.status(401).json({
-        code: 112,
-        error: 'Access Token Missing'
-      });
-    } else if (token !== accessToken) {
-      // invalid auth
-      res.status(401).json({
-        code: 113,
-        error: 'Invalid API Credentials'
-      });
-    } else {
-      // auth ok
-      next();
-    }
-  });
+  router.use(bodyParser.json());
+  router.use(authentication({accessToken: accessToken}));
 
   /* Then routes are defined */
 
@@ -282,40 +261,10 @@ function entityRouter(entities, accessToken) {
   });
 
   /* 404 handler is the last non-error middleware */
-
-  router.use(function (req, res) {
-    res.status(404).json({
-      code: 121,
-      error: 'URL Not Found'
-    });
-  });
+  router.use(notfound());
 
   /* Error handler comes as last middleware */
-
-  /**
-   * Adds an error handler to the express router. It returns
-   * the message and error code.
-   * @name module:back4app-rest.entities.entityRouter#get
-   * @function
-   */
-  router.use(function (err, req, res, next) {
-    if (!err) {
-      next();
-    } else {
-      if (err instanceof SyntaxError) {
-        // malformed JSON on body
-        res.status(400).json({
-          code: 102,
-          error: 'Invalid JSON'
-        });
-      } else {
-        res.status(500).json({
-          code: 1,
-          error: 'Internal Server Error'
-        });
-      }
-    }
-  });
+  router.use(error());
 
   return router;
 }
