@@ -11,6 +11,31 @@ var AssociationAttribute =
 module.exports = entityRouter;
 
 function entityRouter(entities, accessToken) {
+  /**
+   * Constant that defines the maximum value of pagination limit parameter.
+   * @constant {number}
+   * @memberof module:back4app-rest
+   */
+  var MAX_LIMIT = 100;
+  /**
+   * Constant that defines the default value of pagination limit parameter.
+   * @constant {number}
+   * @memberof module:back4app-rest
+   */
+  var DEFAULT_LIMIT = 30;
+  /**
+   * Constant that defines the default value of pagination skip parameter.
+   * @constant {number}
+   * @memberof module:back4app-rest
+   */
+  var DEFAULT_SKIP = 0;
+  /**
+   * Constant that defines the default value of pagination sort parameter.
+   * @constant {number}
+   * @memberof module:back4app-rest
+   */
+  var DEFAULT_SORT = {_id: 1};
+
   var router = express.Router();
 
   router.use(bodyParser.json());
@@ -157,26 +182,40 @@ function entityRouter(entities, accessToken) {
       query = JSON.parse(decodeURIComponent(queryStr));
     }
 
-    // update query to get pagination
-    var page = 0, per_page = 2, skip = 0, pageSizeMax = 100;
-    if (req.query.hasOwnProperty('page')) {
-      page = parseInt(req.query.page);
-      if (req.query.hasOwnProperty('per_page') && per_page <= pageSizeMax) {
-        per_page = parseInt(req.query.per_page);
+    // cleaning pagination limit params
+    var limit = req.query.limit === undefined || isNaN(req.query.limit) ?
+      DEFAULT_LIMIT : req.query.limit > MAX_LIMIT ?
+        MAX_LIMIT : req.query.limit < 0 ?
+        DEFAULT_LIMIT : parseInt(req.query.limit);
+
+    var skip =
+        req.query.skip === undefined || isNaN(req.query.skip) ||
+        req.query.skip < 0 ? DEFAULT_SKIP : parseInt(req.query.skip);
+
+    var sort = {};
+    if (!req.query.hasOwnProperty('sort')) {
+      sort = DEFAULT_SORT;
+    } else {
+      var string = req.query.sort;
+      var components = string.split(/\s*,\s*/);
+      for (var i = 0; i < components.length; i++) {
+        if (/^-[0-9A-Za-z]+$/.test(components[i]) === true) {
+          sort[components[i].substring(1)] = -1;
+        } else {
+          sort[components[i]] = 1;
+        }
       }
-      skip = (page - 1) * per_page;
-      query.skip = skip;
-      query.limit = per_page;
-    } else if (req.query.hasOwnProperty('per_page') && per_page <= pageSizeMax) {
-      per_page = parseInt(req.query.per_page);
-      query.skip = skip;
-      query.limit = per_page;
     }
+
+    var params = {};
+    params.limit = parseInt(limit);
+    params.skip = parseInt(skip);
+    params.sort = sort;
 
     // update query to match only current entity and it's specifications
     query.Entity = {$in: _listEntityAndSpecifications(Entity)};
 
-    Entity.find(query)
+    Entity.find(query, params)
       .then(function (entities) {
         var results = [];
         for (var i = 0; i < entities.length; i++) {

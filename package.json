@@ -34,7 +34,8 @@
     "jshint-stylish": "^2.0.1",
     "kerberos": "0.0.17",
     "mocha": "^2.3.3",
-    "mongodb": "^2.0.47"
+    "mongodb": "^2.0.47",
+    "node-uuid": "^1.4.7"
   },
   "dependencies": {
     "@back4app/back4app-entity": "^1.0.10",
