@@ -102,13 +102,14 @@ describe('entityRouter', function () {
   function orderCityDocuments() {
     cityDocuments.sort(compare);
 
-    function compare (a, b) {
-      if(a._id < b._id)
+    function compare(a, b) {
+      if (a._id < b._id) {
         return -1;
-      else if (a._id > b._id)
+      } else if (a._id > b._id) {
         return 1;
-      else
+      } else {
         return 0;
+      }
     }
   }
 
