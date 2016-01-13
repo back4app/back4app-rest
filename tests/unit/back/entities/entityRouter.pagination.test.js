@@ -61,31 +61,16 @@ describe('entityRouter', function () {
     }
   });
 
-  var District = City.specify({
-    name: 'District',
-    attributes: {
-      type: {type: 'Number'},
-      houses: {type: 'House', multiplicity: '*'}
-    }
-  });
-
-  var House = Entity.specify({
-    name: 'House',
-    attributes: {
-      valor: {type: 'Number'},
-      garden: {type: 'Boolean'}
-    }
-  });
-
   // testing vars
   var mongoAdapter;
   var db;
   var server;
+  var cityDocuments = [];
 
   // setup
   before(function () {
     return Promise.all([
-      openConnections().then(populateDatabase),
+      openConnections().then(populateDatabase).then(orderCityDocuments),
       startAPI()
     ]);
   });
@@ -103,7 +88,6 @@ describe('entityRouter', function () {
   }
 
   function populateDatabase() {
-    var cityDocuments = [];
     for (var i=1; i <= 150; i++) {
       var aux = {};
       aux.Entity = 'City';
@@ -112,16 +96,25 @@ describe('entityRouter', function () {
       aux.streets = i <= 50 ? 3000 : 10000;
       cityDocuments.push(aux);
     }
-
     return db.collection('City').insertMany(cityDocuments);
+  }
 
+  function orderCityDocuments() {
+    cityDocuments.sort(compare);
+
+    function compare (a, b) {
+      if(a._id < b._id)
+        return -1;
+      else if (a._id > b._id)
+        return 1;
+      else
+        return 0;
+    }
   }
 
   function startAPI() {
     var router = entityRouter({
-      City: City,
-      District: District,
-      House: House
+      City: City
     }, 'test_access_token');
 
     var app = express();
@@ -164,10 +157,12 @@ describe('entityRouter', function () {
     });
 
     it('should skip the first 100 cities and return only 50', function () {
+      var city101 = cityDocuments[100];
       return fetchJSON('/entities/City?skip=100&limit=50')
           .then(function (res) {
             expect(res.statusCode).to.be.equals(200);
             expect(res.json.results).to.have.length(50);
+            expect(res.json.results[0].id).to.be.equals(city101._id);
           });
     });
 
