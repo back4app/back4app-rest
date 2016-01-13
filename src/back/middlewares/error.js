@@ -7,6 +7,7 @@
  * @function
  */
 function error() {
+  /* Define middleware */
   return function (err, req, res, next) {
     if (!err) {
       next();

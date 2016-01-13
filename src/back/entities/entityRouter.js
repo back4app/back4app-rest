@@ -1,7 +1,5 @@
 'use strict';
 
-var chai = require('chai');
-var expect = chai.expect;
 var express = require('express');
 var bodyParser = require('body-parser');
 var entity = require('@back4app/back4app-entity');
@@ -15,19 +13,25 @@ var error = require('../middlewares/error');
 
 module.exports = entityRouter;
 
-function entityRouter(entities, accessToken) {
+function entityRouter(options) {
+  /* Parse options */
+  var opts = options || {};
+  var entities = opts.entities || {};
+  var accessToken = opts.accessToken || null;
+
+  /* Build router */
   var router = express.Router();
 
-  /* Middlewares come first */
+  /* Install middlewares first */
   router.use(bodyParser.json());
   router.use(authentication({accessToken: accessToken}));
 
-  /* Then routes are defined */
-  router.post('/:entity/', postEntity({entities: entities}));
-  router.get('/:entity/:id/', getEntity({entities: entities}));
-  router.get('/:entity/', findEntities({entities: entities}));
-  router.put('/:entity/:id/', updateEntity({entities: entities}));
-  router.delete('/:entity/:id/', deleteEntity({entities: entities}));
+  /* Then, define routes */
+  router.post('/:entity/', postEntity(entities));
+  router.get('/:entity/:id/', getEntity(entities));
+  router.get('/:entity/', findEntities(entities));
+  router.put('/:entity/:id/', updateEntity(entities));
+  router.delete('/:entity/:id/', deleteEntity(entities));
 
   /* 404 handler is the last non-error middleware */
   router.use(notfound());
@@ -46,12 +50,12 @@ function entityRouter(entities, accessToken) {
  * @name module:back4app-rest.entities.entityRouter#post
  * @function
  */
-function postEntity(opts) {
+function postEntity(entities) {
   return function (req, res) {
     var entityName = req.params.entity;
 
     // check for errors
-    if (!opts.entities.hasOwnProperty(entityName)) {
+    if (!entities.hasOwnProperty(entityName)) {
       res.status(404).json({
         code: 122,
         error: 'Entity Not Found'
@@ -59,9 +63,7 @@ function postEntity(opts) {
       return;
     }
 
-    var Entity = opts.entities[entityName];
-
-    expect(Entity).to.be.a('function');
+    var Entity = entities[entityName];
 
     var entity = new Entity(req.body);
 
@@ -97,13 +99,13 @@ function postEntity(opts) {
  * @name module:back4app-rest.entities.entityRouter#get
  * @function
  */
-function getEntity(opts) {
+function getEntity(entities) {
   return function (req, res) {
     var entityName = req.params.entity;
     var id = req.params.id;
 
     // check for errors
-    if (!opts.entities.hasOwnProperty(entityName)) {
+    if (!entities.hasOwnProperty(entityName)) {
       res.status(404).json({
         code: 122,
         error: 'Entity Not Found'
@@ -111,7 +113,7 @@ function getEntity(opts) {
       return;
     }
 
-    var Entity = opts.entities[entityName];
+    var Entity = entities[entityName];
 
     // create query to filter by id and match only current entity and
     // it's specifications
@@ -139,12 +141,12 @@ function getEntity(opts) {
  * @name module:back4app-rest.entities.entityRouter#find
  * @function
  */
-function findEntities(opts) {
+function findEntities(entities) {
   return function (req, res) {
     var entityName = req.params.entity;
 
     // check for errors
-    if (!opts.entities.hasOwnProperty(entityName)) {
+    if (!entities.hasOwnProperty(entityName)) {
       res.status(404).json({
         code: 122,
         error: 'Entity Not Found'
@@ -152,7 +154,7 @@ function findEntities(opts) {
       return;
     }
 
-    var Entity = opts.entities[entityName];
+    var Entity = entities[entityName];
 
     var query = {};
     if (req.query.hasOwnProperty('query')) {
@@ -195,13 +197,13 @@ function findEntities(opts) {
  * @name module:back4app-rest.entities.entityRouter#update
  * @function
  */
-function updateEntity(opts) {
+function updateEntity(entities) {
   return function (req, res) {
     var entityName = req.params.entity;
     var id = req.params.id;
 
     // check for errors
-    if (!opts.entities.hasOwnProperty(entityName)) {
+    if (!entities.hasOwnProperty(entityName)) {
       res.status(404).json({
         code: 122,
         error: 'Entity Not Found'
@@ -209,9 +211,7 @@ function updateEntity(opts) {
       return;
     }
 
-    var Entity = opts.entities[entityName];
-
-    expect(Entity).to.be.a('function');
+    var Entity = entities[entityName];
 
     Entity.get({id: id}).then(function (entity) {
         for (var property in req.body) {
@@ -258,13 +258,13 @@ function updateEntity(opts) {
  * @name module:back4app-rest.entities.entityRouter#_delete
  * @function
  */
-function deleteEntity(opts) {
+function deleteEntity(entities) {
   return function (req, res) {
     var entityName = req.params.entity;
     var id = req.params.id;
 
     // check for errors
-    if (!opts.entities.hasOwnProperty(entityName)) {
+    if (!entities.hasOwnProperty(entityName)) {
       res.status(404).json({
         code: 122,
         error: 'Entity Not Found'
@@ -272,7 +272,7 @@ function deleteEntity(opts) {
       return;
     }
 
-    var Entity = opts.entities[entityName];
+    var Entity = entities[entityName];
     var entity = new Entity({id: id});
 
     entity.delete()

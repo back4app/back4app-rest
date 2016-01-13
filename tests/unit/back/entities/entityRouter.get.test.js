@@ -157,12 +157,14 @@ describe('entityRouter', function () {
   }
 
   function startAPI() {
-    var router = entityRouter({
+    var entities = {
       Person: Person,
       Author: Author,
       FictionAuthor: FictionAuthor,
       Book: Book
-    }, 'test_access_token');
+    };
+    var token = 'test_access_token';
+    var router = entityRouter({entities: entities, accessToken: token});
 
     var app = express();
     app.use('/entities', router);

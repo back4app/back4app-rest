@@ -6,11 +6,12 @@
  * @name module:back4app-rest.middlewares#authentication
  * @function
  */
-function authentication(config) {
-  var options = config || {};
+function authentication(options) {
+  /* Parse options */
+  var opts = options || {};
+  var accessToken = opts.accessToken || null;
 
-  options.accessToken = options.accessToken || null;
-
+  /* Define middleware */
   return function (req, res, next) {
     var token = req.get('X-Access-Token');
     if (token === undefined) {
@@ -18,7 +19,7 @@ function authentication(config) {
         code: 112,
         error: 'Access Token Missing'
       });
-    } else if (token !== options.accessToken) {
+    } else if (token !== accessToken) {
       // invalid auth
       res.status(401).json({
         code: 113,

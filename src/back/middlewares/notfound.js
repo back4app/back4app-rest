@@ -7,6 +7,7 @@
  * @function
  */
 function notfound() {
+  /* Define middleware */
   return function (req, res) {
     res.status(404).json({
       code: 121,

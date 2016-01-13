@@ -99,7 +99,9 @@ describe('entityRouter', function () {
   }
 
   function startAPI() {
-    var router = entityRouter({User: User}, 'test_access_token');
+    var entities = {User: User};
+    var token = 'test_access_token';
+    var router = entityRouter({entities: entities, accessToken: token});
 
     var app = express();
     app.use('/entities', router);
