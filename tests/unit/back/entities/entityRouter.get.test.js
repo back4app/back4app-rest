@@ -244,12 +244,12 @@ describe('entityRouter', function () {
 
   describe('GET /:entity/', function () {
 
-    it('should find entities without query', function () {
+    it('should find entities without query and limits params', function () {
       return fetchJSON('/entities/Person/')
         .then(function (res) {
           expect(res.statusCode).to.be.equals(200);
           expect(res.json).to.be.deep.equals({
-            results: [john, theo, will, greg, matt, phil]
+            results: [matt, john, theo, phil, will, greg]
           });
         });
     });
@@ -270,14 +270,43 @@ describe('entityRouter', function () {
         });
     });
 
+    it('should find entities filtered by query and sorted descending by name',
+        function () {
+      var query = JSON.stringify({
+        name: {
+          $in: ['John', 'Will']
+        }
+      });
+      var url = '/entities/Person/?query=' + encodeURIComponent(query) +
+          '&sort=-name';
+      return fetchJSON(url)
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(200);
+            expect(res.json).to.be.deep.equals({
+              results: [will, john]
+            });
+          });
+    });
+
     it('should find entities using middle class in hierarchy', function () {
       return fetchJSON('/entities/Author/')
         .then(function (res) {
           expect(res.statusCode).to.be.equals(200);
           expect(res.json).to.be.deep.equals({
-            results: [greg, matt, phil]
+            results: [matt, phil, greg]
           });
         });
+    });
+
+    it('should find entities using middle class in hierarchy and limit ' +
+        'it by 2', function () {
+      return fetchJSON('/entities/Author?limit=2')
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(200);
+            expect(res.json).to.be.deep.equals({
+              results: [matt, phil]
+            });
+          });
     });
 
     it('should find entities by most specific class', function () {
@@ -288,6 +317,39 @@ describe('entityRouter', function () {
             results: [matt, phil]
           });
         });
+    });
+
+    it('should find entities by most specific class and skip the first ' +
+        '2 results', function () {
+      return fetchJSON('/entities/FictionAuthor?skip=2')
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(200);
+            expect(res.json).to.be.deep.equals({
+              results: []
+            });
+          });
+    });
+
+    it('should find entities and sort then by descending age and ascending' +
+        ' name', function () {
+      return fetchJSON('/entities/Person?sort=-age,name')
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(200);
+            expect(res.json).to.be.deep.equals({
+              results: [john, will, phil, matt, greg, theo]
+            });
+          });
+    });
+
+    it('should find entities and sort then by ascending age and descending' +
+        ' id', function () {
+      return fetchJSON('/entities/Person?sort=age,-id')
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(200);
+            expect(res.json).to.be.deep.equals({
+              results: [theo, greg, matt, phil, will, john]
+            });
+          });
     });
 
     it('should find entities by query on more specific class', function () {
