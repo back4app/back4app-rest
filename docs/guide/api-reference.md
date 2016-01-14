@@ -285,7 +285,7 @@ can sort it according to your preference.
 | --- | --- | --- |
 |  skip  | Specify the number of objects to be skipped. Uses the skip method of MongoDB. Works with limit to paginate results. | 0 |
 |  limit  | Specify the maximum number of results to be returned. Uses the limit method of MongoDB. | 30 |
-|  sort  | Specify the order in which the document is returned. You can sort by multiple fields, in ascending or descending order. | {_id: 1} |
+|  sort  | Specify the order in which the document is returned. You can sort by multiple fields, in ascending or descending order. | {id: 1} |
 
 Lets see some examples.
 
