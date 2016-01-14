@@ -132,8 +132,28 @@ function login(store) {
  */
 function logout(store) {
   return function (req, res) {
-    res.json({
-      status: 'ok'
-    });
+    // check for request session
+    if (req.session === undefined) {
+      res.status(403).json({
+        code: 118,
+        error: 'Operation Forbidden'
+      });
+      return;
+    }
+
+    // destroy current session
+    var sid = req.session.token;
+    store.destroy(sid)
+      .then(function () {
+        // all ok
+        res.json({});
+      })
+      .catch(function () {
+        // unknown error
+        res.status(500).json({
+          code: 1,
+          error: 'Internal Server Error'
+        });
+      });
   };
 }

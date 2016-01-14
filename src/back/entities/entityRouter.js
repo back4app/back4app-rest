@@ -8,6 +8,7 @@ var ValidationError = entity.models.errors.ValidationError;
 var QueryError = require('@back4app/back4app-entity-mongodb').errors.QueryError;
 
 var authentication = require('../middlewares/authentication');
+var session = require('../middlewares/session');
 var notfound = require('../middlewares/notfound');
 var error = require('../middlewares/error');
 
@@ -18,6 +19,7 @@ function entityRouter(options) {
   var opts = options || {};
   var entities = opts.entities || {};
   var accessToken = opts.accessToken || null;
+  var store = opts.store || new session.MemoryStore();
 
   /* Build router */
   var router = express.Router();
@@ -25,6 +27,7 @@ function entityRouter(options) {
   /* Install middlewares first */
   router.use(bodyParser.json());
   router.use(authentication({accessToken: accessToken}));
+  router.use(session({store: store}));
 
   /* Then, define routes */
   router.post('/:entity/', postEntity(entities));
