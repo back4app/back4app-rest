@@ -5,6 +5,7 @@ var bodyParser = require('body-parser');
 var entity = require('@back4app/back4app-entity');
 
 var authentication = require('./middlewares/authentication');
+var session = require('./middlewares/session');
 var notfound = require('./middlewares/notfound');
 var error = require('./middlewares/error');
 
@@ -14,6 +15,7 @@ function securityRouter(options) {
   /* Parse options */
   var opts = options || {};
   var accessToken = opts.accessToken || null;
+  var store = opts.store || new session.MemoryStore();
 
   /* Build router */
   var router = express.Router();
@@ -21,10 +23,16 @@ function securityRouter(options) {
   /* Install middlewares first */
   router.use(bodyParser.json());
   router.use(authentication({accessToken: accessToken}));
+  router.use(session({store: store}));
 
   /* Then, define routes */
-  router.post('/login', login());
-  router.post('/logout', logout());
+  router.post('/login', login(store));
+  router.post('/logout', logout(store));
+
+  // TODO: URL for testing purpose, remove when security is implemented
+  router.get('/echoSession', function (req, res) {
+    res.json({session: req.session});
+  });
 
   /* 404 handler is the last non-error middleware */
   router.use(notfound());
@@ -43,7 +51,7 @@ function securityRouter(options) {
  * @name module:back4app-rest.securityRouter#login
  * @function
  */
-function login() {
+function login(store) {
 
   // TODO: remove!
   var Entity = entity.models.Entity;
@@ -92,10 +100,19 @@ function login() {
           return;
         }
 
-        // TODO: write tests for API errors
-        // TODO: create session
-
-        res.json({user: user.username, auth: 'ok'});
+        // create new session
+        store.create(req, user.id)
+          .then(function (session) {
+            // return session token to user
+            res.json({sessionToken: session.token});
+          })
+          .catch(function () {
+            // unknown error
+            res.status(500).json({
+              code: 1,
+              error: 'Internal Server Error'
+            });
+          });
       })
       .catch(function () {
         // username not found
@@ -113,7 +130,7 @@ function login() {
  * @name module:back4app-rest.securityRouter#login
  * @function
  */
-function logout() {
+function logout(store) {
   return function (req, res) {
     res.json({
       status: 'ok'
