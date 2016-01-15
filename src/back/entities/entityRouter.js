@@ -160,8 +160,7 @@ function getEntity(entities) {
       .then(function (entity) {
         if (hasReadPermission(entity, userId)) {
           res.json(_objectToDocument(entity));
-        }
-        else {
+        } else {
           res.status(403).json({
             code: 118,
             error: 'Operation Forbidden'

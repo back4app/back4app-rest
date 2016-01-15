@@ -245,7 +245,8 @@ describe('entityRouter', function () {
         });
     });
 
-    it('should return 403 code because the user does not have permission', function () {
+    it('should return 403 code because the user does not have permission',
+        function () {
       return login('user1', 'pass1')
         .then(function (res) {
           return res.json.sessionToken;
@@ -274,7 +275,8 @@ describe('entityRouter', function () {
         });
     });
 
-    it('should get entity by id because this instance has public permission', function () {
+    it('should get entity by id because this instance has public permission',
+        function () {
       return fetchJSON('/entities/Post/924f8e4c-56f1-4eb9-b3b5-f299ded65e9d/')
         .then(function (res) {
           expect(res.statusCode).to.be.equals(200);
