@@ -129,8 +129,14 @@ function postEntity(entities) {
  */
 function getEntity(entities) {
   return function (req, res) {
+    // TODO: remove
+    req.session = {userId: '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c'};
+
     var entityName = req.params.entity;
     var id = req.params.id;
+
+    // check if exists a session and takes the userId
+    var userId = req.session === undefined ? undefined : req.session.userId;
 
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
@@ -152,7 +158,15 @@ function getEntity(entities) {
 
     Entity.get(query)
       .then(function (entity) {
-        res.json(_objectToDocument(entity));
+        if (hasReadPermission(entity, userId)) {
+          res.json(_objectToDocument(entity));
+        }
+        else {
+          res.status(403).json({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
+        }
       })
       .catch(function () {
         res.status(404).json({
@@ -406,4 +420,20 @@ function _createCleanInstance(Entity, id) {
   }, {
     clean: true
   });
+}
+
+// check permission
+function hasReadPermission(entity, userId) {
+  // entity is public
+  if (entity.permissions === undefined || entity.permissions === null) {
+    return true;
+  }
+
+  // check if user has permission
+  var userPermission = entity.permissions[userId];
+  if (userPermission === undefined) {
+    return false;
+  }
+  // return user read permission of entity
+  return Boolean(userPermission.read);
 }
