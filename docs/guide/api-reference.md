@@ -6,22 +6,11 @@ using HTTP Requests.
 With those endpoints, you can access your entities, changing, adding or
 deleting data related to them.
 
-## Table of contents
+## API Endpoint
 
-* [API Access](#api-access)
-* [Paths](#paths)
-* [How do I use it?](#how-do-i-use-it)
- * [GET on /entity/](#get-on-entity)
- * [POST on /entity/](#post-on-entity)
- * [GET on /entity/id](#get-on-entityid)
- * [PUT on /entity/id](#put-on-entityid)
- * [DELETE on /entity/id](#delete-on-entityid)
-* [Queries](#queries)
- * [Query Constrains](#query-constrains)
- * [Query Limits](#query-limits-pagination)
-* [Status Codes and Errors](#status-codes-and-errors)
+All of the following API methods are accessible through the domain: `https://api.back4app.com`.
 
-<h2 id="api-access">API Access</h2>
+## API Access
 
 Sending us the _App ID_, you will have access to your project, being able to
 interact with the entities.
@@ -32,7 +21,7 @@ requested path, without telling us _your back4app credentials_ every time.
 
 They must be sent inside the request's header.
 
-<h2 id="paths">Paths</h2>
+## Paths
 
 The first generated paths will be the REST API endpoint, linking to your
 resources.
@@ -51,7 +40,7 @@ using HTTP Methods:
 | PUT | /entity/id/ | Updates the data from the Entity Instance that matches with the given ID. |
 | DELETE | /entity/id/ | Delete the data from the Entity Instance that matches with the given ID. |
 
-<h2 id="how-do-i-use-it">How do I use it?</h2>
+## How do I use it?
 
 So, now you know all the methods in your hand. But how do they work?
 
@@ -59,7 +48,7 @@ Let's see it with some examples.
 
 ---
 
-<h5 id="get-on-entity">GET on /entity</h5>
+##### GET on /entity
 
 On MyProject project, I've created an Person Entity. It has just only
 one instance saved as a document on my database.
@@ -67,7 +56,7 @@ one instance saved as a document on my database.
 So, if we make this request
 
 ```http
-GET /entities/Person HTTP/1.1
+GET /entities/Person
 Content-Type: application/x-www-form-urlencoded
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -75,10 +64,7 @@ X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 It will return us this
 
-```http
-HTTP/1.x 200 OK
-Content-Type: application/json;
-
+```json
 [{   
     "id" : "xxxxx01",
     "name" : "John Watson",
@@ -87,18 +73,18 @@ Content-Type: application/json;
 ```
 
 It returns all the instances registered in database, using limits and pagination to separate
-lots of data. We can also limit the result. See more on [Queries](#queries) section.
+lots of data. We can also limit the result. See more on Queries section.
 
 ---
 
-<h5 id="post-on-entity">POST on /entity</h5>
+##### POST on /entity
 
 Now, we want to insert a new Entity Instance. The POST method will take a JSON.
 
 So, if we make this request
 
 ```http
-POST /entities/Person HTTP/1.1
+POST /entities/Person
 Content-Type: application/json
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -111,10 +97,7 @@ X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 It will return us this
 
-```http
-HTTP/1.x 201 OK
-Content-Type: application/json;
- 
+```json
 {   
     "id" : "xxxxx02",
     "name" : "Sherlock Holmes",
@@ -128,13 +111,13 @@ It should be inserted on registered database.
 ---
 
 
-<h5 id="get-on-entityid">GET on /entity:id</h5>
+##### GET on /entity:id
 
 What about seeing ours new Entity Instance, specifically?
 If we make this request
 
 ```http
-GET /entities/Person HTTP/1.1
+GET /entities/Person
 Content-Type: application/x-www-form-urlencoded
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -142,10 +125,7 @@ X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 It will return us this
 
-```http
-HTTP/1.x 200 OK
-Content-Type: application/json;
- 
+```json
 [{   
     "id" : "xxxxx01",
     "name" : "John Watson",
@@ -163,7 +143,7 @@ That's not what we want!
 We should use its ID
 
 ```http
-GET /entities/Person/xxxxx02 HTTP/1.1
+GET /entities/Person/xxxxx02
 Content-Type: application/x-www-form-urlencoded
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -171,10 +151,7 @@ X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 Returning this
 
-```http
-HTTP/1.x 200 OK
-Content-Type: application/json;
- 
+```json
 {   
     "id" : "xxxxx02",
     "name" : "Sherlock Holmes",
@@ -186,13 +163,13 @@ Content-Type: application/json;
 ---
 
 
-<h5 id="put-on-entityid">PUT on /entity:id</h5>
+##### PUT on /entity:id
 
 We want to change the current job of our Person.
 If we make this request
 
 ```http
-PUT /entities/Person/xxxxx02 HTTP/1.1
+PUT /entities/Person/xxxxx02
 Content-Type: application/json
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -204,10 +181,7 @@ X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 It will return us this
 
-```http
-HTTP/1.x 200 OK
-Content-Type: application/json;
- 
+```json
 {   
     "id" : "xxxxx02",
     "name" : "Sherlock Holmes",
@@ -222,45 +196,41 @@ inserted on database.
 ---
 
 
-<h5 id="delete-on-entityid">DELETE on /entity:id</h5>
+##### DELETE on /entity:id
 
 So, we have this one Person that we want to remove from our database 
 If we make this request
 
 ```http
-DELETE /entities/Person/xxxxx02 HTTP/1.1
+DELETE /entities/Person/xxxxx02
 Content-Type: application/json
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-It will return us this
-
-```http
-HTTP/1.x 204 OK
-Content-Type: application/json;
-```
+It will return us an empty body with status code `204`.
 
 The success of this operation is checked only using the status code. Check 
-[Status Code and Errors](#status-codes-and-errors) section.
+Status Code and Errors section.
 
 
 ---
 
 
-<h2 id="queries">Queries</h2>
+## Queries
 
-<h5 id="query-constrains">Query Constrains</h5>
+##### Query Constrains
+
 To put constrains on the objects found, you may use the query URL parameter.
-For example, you make a GET on /entity/Person, but you will receive a lot of
-datathat you may want to filter.
+For example, you make a `GET` on `/entity/Person`, but you will receive a lot of
+data that you may want to filter.
 
-Using the the parameter "query", you will be able to send a query to filter the
+Using the the parameter `query`, you will be able to send a query to filter the
 returned data, based on [MongoDB Query](https://docs.mongodb.org/manual/tutorial/query-documents/).
 
 Since the query receives a JSON, it must be URLEncoded before sent as parameter.
 ```http
-GET /entities/Person/?query={"job":"Doctor"} HTTP/1.1
+GET /entities/Person/?query={"job": "Doctor"}
 Content-Type: application/json
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -270,16 +240,16 @@ To refine your query, you may use [Comparison Query Operators](https://docs.mong
 just like MongoDB does. For example,
 
 ```http
-GET /entities/Person/?query=$in: ['Doctor', 'Teacher']} HTTP/1.1
+GET /entities/Person/?query={"job": {$in: ["Doctor", "Teacher"]}}
 Content-Type: application/json
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-<h5 id="query-limits-pagination">Query Limits and Pagination</h5>
+##### Query Limits and Pagination
 
-The parameters available to limit the returned data are skip, limit. Also you 
-can sort it according to your preference.
+The parameters available to limit the returned data are `skip`, `limit`. Also you 
+can `sort` it according to your preference.
 
 | Parameter | Description | Default Value |
 | --- | --- | --- |
@@ -291,27 +261,27 @@ Lets see some examples.
 
 Specifying skip, limit on url:
 ```http
-GET /entities/Person?skip=10&limit=20 HTTP/1.1
+GET /entities/Person?skip=10&limit=20
 Content-Type: application/x-www-form-urlencoded
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 The resulted json will be skipped the first 10 objects from where the cursor is.
-If you want to implement pagination, you may use both of then.
+If you want to implement pagination, you may use both of them.
 
 Without specifying any of these parameters, Back{4}app will use the default 
 value of all parameters, and will sort objects by id in ascendant order.
 
-A max-value limit default is also defined. So, if you pass limit bigger than 100,
+A `max-value limit` default is also defined. So, if you pass limit bigger than 100,
 it will be automatically set to 100.
 
 The sort parameter behaves like MongoDB, and contains field and value pair. To 
-order ascendantly the value may be 1 and descently, may be -1.
+order it ascendantly the value may be 1, and descently, may be -1.
 
 So, an example of sorting with multiple fields would be:
 ```http
-GET /entities/Person?sort=-name,job HTTP/1.1
+GET /entities/Person?sort=-name,job
 Content-Type: application/x-www-form-urlencoded
 X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -319,7 +289,7 @@ X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 On this example, the returned data will be sort first by name on descent order
 and then by job on ascendant order.
 
-<h2 id="status-codes-and-errors">Status Codes and Errors</h2>
+## Status Codes and Errors
 
 Great part of the errors can be defined by its status codes.
 But when they're not enough, the REST API will sent an error JSON,
