@@ -129,8 +129,8 @@ function postEntity(entities) {
  */
 function getEntity(entities) {
   return function (req, res) {
-    // TODO: remove
-    req.session = {userId: '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c'};
+    //// TODO: remove
+    //req.session = {userId: '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c'};
 
     var entityName = req.params.entity;
     var id = req.params.id;
