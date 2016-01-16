@@ -3,6 +3,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var entity = require('@back4app/back4app-entity');
+var User = entity.models.User;
 
 var authentication = require('./middlewares/authentication');
 var session = require('./middlewares/session');
@@ -53,20 +54,6 @@ function securityRouter(options) {
  */
 function login(store) {
 
-  // TODO: remove!
-  var Entity = entity.models.Entity;
-  var User = Entity.specify({
-    name: 'User',
-    attributes: {
-      username: {type: 'String'},
-      password: {type: 'String'}
-    }
-  });
-  User.prototype.authenticate = function (password) {
-    return this.password === password;
-  };
-  // TODO: end remove!
-
   return function (req, res) {
     var username = req.body.username;
     var password = req.body.password;
@@ -92,26 +79,29 @@ function login(store) {
     User.get({username: username})
       .then(function (user) {
         // check password
-        if (!user.authenticate(password)) {
-          res.status(401).json({
-            code: 116,
-            error: 'Invalid User Credentials'
-          });
-          return;
-        }
+        user.authenticate(password)
+          .then(function (isValid) {
+            if (!isValid) {
+              res.status(401).json({
+                code: 116,
+                error: 'Invalid User Credentials'
+              });
+              return;
+            }
 
-        // create new session
-        store.create(req, user.id)
-          .then(function (session) {
-            // return session token to user
-            res.json({sessionToken: session.token});
-          })
-          .catch(function () {
-            // unknown error
-            res.status(500).json({
-              code: 1,
-              error: 'Internal Server Error'
-            });
+            // create new session
+            store.create(req, user.id)
+              .then(function (session) {
+                // return session token to user
+                res.json({sessionToken: session.token});
+              })
+              .catch(function () {
+                // unknown error
+                res.status(500).json({
+                  code: 1,
+                  error: 'Internal Server Error'
+                });
+              });
           });
       })
       .catch(function () {

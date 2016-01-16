@@ -63,8 +63,13 @@ describe('entityRouter', function () {
   });
 
   // entity JSON objects
-  var user1 = {Entity: 'AuthUser', id: 'c188514c-4305-4fd2-a9a0-e13a4a60a997',
-    login: 'user1', password: 'pass1'};
+  var user1 = {
+    Entity: 'AuthUser',
+    id: 'c188514c-4305-4fd2-a9a0-e13a4a60a997',
+    permissions: null,
+    login: 'user1',
+    password: 'pass1'
+  };
 
   // testing vars
   var mongoAdapter;

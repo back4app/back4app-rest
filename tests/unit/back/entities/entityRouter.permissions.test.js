@@ -112,8 +112,7 @@ describe('entityRouter', function () {
     name: 'Post',
     attributes: {
       text: {type: 'String'},
-      picture: {type: 'Boolean'},
-      permissions: {type: 'Object'}
+      picture: {type: 'Boolean'}
     }
   });
 
@@ -172,7 +171,10 @@ describe('entityRouter', function () {
       ]),
       db.collection('User').insertOne({
         Entity: 'User', _id: '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c',
-        username: 'user1', password: 'pass1',
+        username: 'user1',
+        // hash for password 'pass1'
+        password:
+          '$2a$10$/XqpCd8IxSufU/O3nsyWT.YsEgHiHL7eX89ywTe8oP6YNbjDqhIeW',
         permissions: {
           '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
             read: true,
@@ -237,11 +239,11 @@ describe('entityRouter', function () {
         })
         .then(function (sessionToken) {
           var url = '/entities/Post/e8e5532c-8444-4a02-bc31-2a18b2fae9b7/';
-          return fetchJSON(url, {sessionToken: sessionToken})
-            .then(function (res) {
-              expect(res.statusCode).to.be.equals(200);
-              expect(res.json).to.be.deep.equals(post1);
-            });
+          return fetchJSON(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals(post1);
         });
     });
 
@@ -253,14 +255,14 @@ describe('entityRouter', function () {
         })
         .then(function (sessionToken) {
           var url = '/entities/Post/4d0e9795-c692-4b0f-b9c1-8ddeece6aa8b/';
-          return fetchJSON(url, {sessionToken: sessionToken})
-            .then(function (res) {
-              expect(res.statusCode).to.be.equals(403);
-              expect(res.json).to.be.deep.equals({
-                code: 118,
-                error: 'Operation Forbidden'
-              });
-            });
+          return fetchJSON(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(403);
+          expect(res.json).to.be.deep.equals({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
         });
     });
 
