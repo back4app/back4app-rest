@@ -2,7 +2,10 @@
 
 var express = require('express');
 var bodyParser = require('body-parser');
+var Promise = require('bluebird');
+var bcrypt = require('bcryptjs');
 var entity = require('@back4app/back4app-entity');
+var User = entity.models.User;
 var AssociationAttribute = entity.models.attributes.types.AssociationAttribute;
 var ValidationError = entity.models.errors.ValidationError;
 var QueryError = require('@back4app/back4app-entity-mongodb').errors.QueryError;
@@ -45,6 +48,9 @@ function entityRouter(options) {
   var entities = opts.entities || {};
   var accessToken = opts.accessToken || null;
   var store = opts.store || new session.MemoryStore();
+
+  // add User to list of entities
+  entities.User = User;
 
   /* Build router */
   var router = express.Router();
@@ -109,13 +115,35 @@ function postEntity(entities) {
       return;
     }
 
-    entity.save().then(function () {
-        res.status(201).json(_objectToDocument(entity));
+    // replace password with entity is a User
+    _replacePasswordInUser(entity, entityName)
+      .then(function (entity) {
+        entity.save()
+          .then(function () {
+            // handle special User's permissions
+            _replacePermissionsInUser(entity, entityName)
+              .then(function (entity) {
+                // return created entity
+                res.status(201).json(_objectToDocument(entity));
+              })
+              .catch(function () {
+                res.status(500).json({
+                  code: 1,
+                  error: 'Internal Server Error'
+                });
+              });
+          })
+          .catch(function () {
+            res.status(400).json({
+              code: 103,
+              error: 'Invalid Entity'
+            });
+          });
       })
       .catch(function () {
-        res.status(400).json({
-          code: 0,
-          message: 'Internal Error'
+        res.status(500).json({
+          code: 1,
+          error: 'Internal Server Error'
         });
       });
   };
@@ -129,9 +157,6 @@ function postEntity(entities) {
  */
 function getEntity(entities) {
   return function (req, res) {
-    //// TODO: remove
-    //req.session = {userId: '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c'};
-
     var entityName = req.params.entity;
     var id = req.params.id;
 
@@ -255,8 +280,8 @@ function findEntities(entities) {
       })
       .catch(function () {
         res.status(500).json({
-          code: 0,
-          message: 'Internal error'
+          code: 1,
+          error: 'Internal Server Error'
         });
       });
   };
@@ -405,6 +430,55 @@ function _replaceAssociationInAttributes(Entity, entity) {
       entity[attrName] = attribute.parseDataValue(entity[attrName]);
     }
   }
+}
+
+function _replacePasswordInUser(entity, entityName) {
+  return new Promise(function (resolve, reject) {
+    // only change users
+    if (entityName !== 'User') {
+      resolve(entity);
+      return;
+    }
+
+    // hash password
+    bcrypt.genSalt(10, function (err, salt) {
+      if (err) {
+        reject(err);
+      } else {
+        bcrypt.hash(entity.password, salt, function (err, hash) {
+          if (err) {
+            reject(err);
+          } else {
+            entity.password = hash;
+            resolve(entity);
+          }
+        });
+      }
+    });
+  });
+}
+
+function _replacePermissionsInUser(entity, entityName) {
+  return new Promise(function (resolve, reject) {
+    // only change users
+    if (entityName !== 'User') {
+      resolve(entity);
+      return;
+    }
+
+    // update permissions
+    var userId = entity.id;
+    entity.permissions = {};
+    entity.permissions[userId] = {read: true, write: true};
+
+    entity.save()
+      .then(function () {
+        resolve(entity);
+      })
+      .catch(function (err) {
+        reject(err);
+      });
+  });
 }
 
 function _createCleanInstance(Entity, id) {

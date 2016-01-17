@@ -30,11 +30,6 @@ function securityRouter(options) {
   router.post('/login', login(store));
   router.post('/logout', logout(store));
 
-  // TODO: URL for testing purpose, remove when security is implemented
-  router.get('/echoSession', function (req, res) {
-    res.json({session: req.session});
-  });
-
   /* 404 handler is the last non-error middleware */
   router.use(notfound());
 
