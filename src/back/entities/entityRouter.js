@@ -313,7 +313,7 @@ function updateEntity(entities) {
     var Entity = entities[entityName];
 
     Entity.get({id: id}).then(function (entity) {
-      if (hasWritePermission(entity, userId)) {
+      if (_hasWritePermission(entity, userId)) {
         for (var property in req.body) {
           if (req.body.hasOwnProperty(property)) {
             entity[property] = req.body[property];
@@ -522,14 +522,14 @@ function hasReadPermission(entity, userId) {
 }
 
 // check write permission
-function hasWritePermission(entity, userId) {
+function _hasWritePermission(entity, userId) {
   // entity is public
   if (entity.permissions === undefined || entity.permissions === null) {
     return true;
   }
 
   // check if user has permission
-  var userPermission = entity.permissions[userId];
+  var userPermission = entity.permissions[userId] || entity.permissions['*'];
   if (userPermission === undefined) {
     return false;
   }

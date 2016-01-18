@@ -185,6 +185,18 @@ describe('entityRouter', function () {
     permissions: null
   };
 
+  var updatedPost3 = {
+    id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
+    Entity: 'Post', picture: true, text: 'Anyone can modify, except user1',
+    permissions: {
+      '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
+      '*': {
+        read: true,
+        write: true
+      }
+    }
+  };
+
   // testing vars
   var mongoAdapter;
   var db;
@@ -230,6 +242,16 @@ describe('entityRouter', function () {
             read: true,
             write: true
           }}
+        },
+        {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
+          text: 'Hello South America!', picture: false,
+          permissions: {
+            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
+            '*': {
+              read: true,
+              write: true
+            }
+          }
         }
       ]),
       db.collection('User').insertOne({
@@ -428,5 +450,44 @@ describe('entityRouter', function () {
           });
       }
     );
+
+    it('"*": should get entity by id because this instance has public' +
+      ' permission',
+      function () {
+        var updatedData = JSON.stringify({
+          text: 'Anyone can modify, except user1',
+          picture: true
+        });
+        return update(updatedData,
+          '/entities/Post/e5d30ee6-156a-4710-b6e9-891fd19d02c0/')
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(200);
+            expect(res.json).to.be.deep.equals(updatedPost3);
+          });
+      }
+    );
+
+    it('"*": should return 403 code because the user does not have permission',
+      function () {
+        var updatedData = JSON.stringify({
+          text: 'I CANT WRITE!',
+          picture: false
+        });
+        return login('user1', 'pass1')
+          .then(function (res) {
+            return res.json.sessionToken;
+          })
+          .then(function (sessionToken) {
+            var url = '/entities/Post/e5d30ee6-156a-4710-b6e9-891fd19d02c0/';
+            return update(updatedData, url, {sessionToken: sessionToken});
+          })
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(403);
+            expect(res.json).to.be.deep.equals({
+              code: 118,
+              error: 'Operation Forbidden'
+            });
+          });
+      });
   });
 });
