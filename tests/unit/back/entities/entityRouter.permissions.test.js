@@ -208,7 +208,7 @@ describe('entityRouter', function () {
           permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
         },
         {Entity: 'Account', _id: '827b625a-80ed-4f35-b843-12958fdafa81',
-          name: 'Account3', permissions: {'*': {read: false}}
+          name: 'Account3', permissions: {'*': {}}
         }
       ]),
       db.collection('User').insertMany([
