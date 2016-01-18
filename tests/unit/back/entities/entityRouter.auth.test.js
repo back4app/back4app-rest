@@ -54,8 +54,8 @@ function fetchJSON(path, token) {
 // unit tests
 describe('entityRouter', function () {
   // back4app Entities
-  var User = Entity.specify({
-    name: 'User',
+  var AuthUser = Entity.specify({
+    name: 'AuthUser',
     attributes: {
       login: {type: 'String'},
       password: {type: 'String'}
@@ -63,8 +63,13 @@ describe('entityRouter', function () {
   });
 
   // entity JSON objects
-  var user1 = {Entity: 'User', id: 'c188514c-4305-4fd2-a9a0-e13a4a60a997',
-    login: 'user1', password: 'pass1'};
+  var user1 = {
+    Entity: 'AuthUser',
+    id: 'c188514c-4305-4fd2-a9a0-e13a4a60a997',
+    permissions: null,
+    login: 'user1',
+    password: 'pass1'
+  };
 
   // testing vars
   var mongoAdapter;
@@ -92,14 +97,16 @@ describe('entityRouter', function () {
   }
 
   function populateDatabase() {
-    return db.collection('User').insertOne(
-      {Entity: 'User', _id: 'c188514c-4305-4fd2-a9a0-e13a4a60a997',
+    return db.collection('AuthUser').insertOne(
+      {Entity: 'AuthUser', _id: 'c188514c-4305-4fd2-a9a0-e13a4a60a997',
         login: 'user1', password: 'pass1'}
     );
   }
 
   function startAPI() {
-    var router = entityRouter({User: User}, 'test_access_token');
+    var entities = {AuthUser: AuthUser};
+    var token = 'test_access_token';
+    var router = entityRouter({entities: entities, accessToken: token});
 
     var app = express();
     app.use('/entities', router);
@@ -133,7 +140,7 @@ describe('entityRouter', function () {
   describe('Authentication', function () {
 
     it('should get entity with correct token', function () {
-      var url = '/entities/User/c188514c-4305-4fd2-a9a0-e13a4a60a997/';
+      var url = '/entities/AuthUser/c188514c-4305-4fd2-a9a0-e13a4a60a997/';
       var token = 'test_access_token';
       return fetchJSON(url, token)
         .then(function (res) {
@@ -143,7 +150,7 @@ describe('entityRouter', function () {
     });
 
     it('should be Unauthorized with invalid token', function () {
-      var url = '/entities/User/c188514c-4305-4fd2-a9a0-e13a4a60a997/';
+      var url = '/entities/AuthUser/c188514c-4305-4fd2-a9a0-e13a4a60a997/';
       var token = 'invalid_token';
       return fetchJSON(url, token)
         .then(function (res) {
@@ -152,7 +159,7 @@ describe('entityRouter', function () {
     });
 
     it('should be Unauthorized without token', function () {
-      var url = '/entities/User/c188514c-4305-4fd2-a9a0-e13a4a60a997/';
+      var url = '/entities/AuthUser/c188514c-4305-4fd2-a9a0-e13a4a60a997/';
       return fetchJSON(url)
         .then(function (res) {
           expect(res.statusCode).to.be.equals(401);

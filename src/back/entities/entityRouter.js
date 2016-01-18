@@ -1,87 +1,96 @@
 'use strict';
 
-var chai = require('chai');
-var expect = chai.expect;
 var express = require('express');
 var bodyParser = require('body-parser');
+var Promise = require('bluebird');
+var bcrypt = require('bcryptjs');
 var entity = require('@back4app/back4app-entity');
+var User = entity.models.User;
 var AssociationAttribute = entity.models.attributes.types.AssociationAttribute;
 var ValidationError = entity.models.errors.ValidationError;
 var QueryError = require('@back4app/back4app-entity-mongodb').errors.QueryError;
 
+var authentication = require('../middlewares/authentication');
+var session = require('../middlewares/session');
+var notfound = require('../middlewares/notfound');
+var error = require('../middlewares/error');
+
 module.exports = entityRouter;
 
-function entityRouter(entities, accessToken) {
-  /**
-   * Constant that defines the maximum value of pagination limit parameter.
-   * @constant {number}
-   * @memberof module:back4app-rest
-   */
-  var MAX_LIMIT = 100;
-  /**
-   * Constant that defines the default value of pagination limit parameter.
-   * @constant {number}
-   * @memberof module:back4app-rest
-   */
-  var DEFAULT_LIMIT = 30;
-  /**
-   * Constant that defines the default value of pagination skip parameter.
-   * @constant {number}
-   * @memberof module:back4app-rest
-   */
-  var DEFAULT_SKIP = 0;
-  /**
-   * Constant that defines the default value of pagination sort parameter.
-   * @constant {number}
-   * @memberof module:back4app-rest
-   */
-  var DEFAULT_SORT = {_id: 1};
+/**
+ * Constant that defines the maximum value of pagination limit parameter.
+ * @constant {number}
+ * @memberof module:back4app-rest
+ */
+var MAX_LIMIT = 100;
+/**
+ * Constant that defines the default value of pagination limit parameter.
+ * @constant {number}
+ * @memberof module:back4app-rest
+ */
+var DEFAULT_LIMIT = 30;
+/**
+ * Constant that defines the default value of pagination skip parameter.
+ * @constant {number}
+ * @memberof module:back4app-rest
+ */
+var DEFAULT_SKIP = 0;
+/**
+ * Constant that defines the default value of pagination sort parameter.
+ * @constant {number}
+ * @memberof module:back4app-rest
+ */
+var DEFAULT_SORT = {_id: 1};
 
+function entityRouter(options) {
+  /* Parse options */
+  var opts = options || {};
+  var entities = opts.entities || {};
+  var accessToken = opts.accessToken || null;
+  var store = opts.store || new session.MemoryStore();
+
+  // add User to list of entities
+  entities.User = User;
+
+  /* Build router */
   var router = express.Router();
 
+  /* Install middlewares first */
   router.use(bodyParser.json());
+  router.use(authentication({accessToken: accessToken}));
+  router.use(session({store: store}));
 
-  /* Middlewares come first */
+  /* Then, define routes */
+  router.post('/:entity/', postEntity(entities));
+  router.get('/:entity/:id/', getEntity(entities));
+  router.get('/:entity/', findEntities(entities));
+  router.put('/:entity/:id/', updateEntity(entities));
+  router.delete('/:entity/:id/', deleteEntity(entities));
 
-  /**
-   * Adds an authentication handler to the express router. It checks for
-   * the `X-Access-Token` header and compares with the given token.
-   * @name module:back4app-rest.entities.entityRouter#auth
-   * @function
-   */
-  router.use(function auth(req, res, next) {
-    var token = req.get('X-Access-Token');
-    if (token === undefined) {
-      res.status(401).json({
-        code: 112,
-        error: 'Access Token Missing'
-      });
-    } else if (token !== accessToken) {
-      // invalid auth
-      res.status(401).json({
-        code: 113,
-        error: 'Invalid API Credentials'
-      });
-    } else {
-      // auth ok
-      next();
-    }
-  });
+  /* 404 handler is the last non-error middleware */
+  router.use(notfound());
 
-  /* Then routes are defined */
+  /* Error handler comes as last middleware */
+  router.use(error());
 
-  /**
-   * Adds a handler to the express router (POST /:entity/). It returns
-   * the inserted entity instance.
-   * @name module:back4app-rest.entities.entityRouter#post
-   * @function
-   */
-  router.post('/:entity/', function (request, response) {
-    var entityName = request.params.entity;
+  return router;
+}
+
+/* API handlers */
+
+/**
+ * Adds a handler to the express router (POST /:entity/). It returns
+ * the inserted entity instance.
+ * @name module:back4app-rest.entities.entityRouter#post
+ * @function
+ */
+function postEntity(entities) {
+  return function (req, res) {
+    var entityName = req.params.entity;
 
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
-      response.status(404).json({
+      res.status(404).json({
         code: 122,
         error: 'Entity Not Found'
       });
@@ -90,9 +99,7 @@ function entityRouter(entities, accessToken) {
 
     var Entity = entities[entityName];
 
-    expect(Entity).to.be.a('function');
-
-    var entity = new Entity(request.body);
+    var entity = new Entity(req.body);
 
     // Replaces the Association ID with an Association Entity's Instance
     _replaceAssociationInAttributes(Entity, entity);
@@ -101,33 +108,60 @@ function entityRouter(entities, accessToken) {
     try {
       entity.validate();
     } catch (e) {
-      response.status(400).json({
+      res.status(400).json({
         code: 103,
         error: 'Invalid Entity'
       });
       return;
     }
 
-    entity.save().then(function () {
-      response.status(201).json(_objectToDocument(entity));
-    })
+    // replace password with entity is a User
+    _replacePasswordInUser(entity, entityName)
+      .then(function (entity) {
+        entity.save()
+          .then(function () {
+            // handle special User's permissions
+            _replacePermissionsInUser(entity, entityName)
+              .then(function (entity) {
+                // return created entity
+                res.status(201).json(_objectToDocument(entity));
+              })
+              .catch(function () {
+                res.status(500).json({
+                  code: 1,
+                  error: 'Internal Server Error'
+                });
+              });
+          })
+          .catch(function () {
+            res.status(400).json({
+              code: 103,
+              error: 'Invalid Entity'
+            });
+          });
+      })
       .catch(function () {
-        response.status(400).json({
-          code: 0,
-          message: 'Internal Error'
+        res.status(500).json({
+          code: 1,
+          error: 'Internal Server Error'
         });
       });
-  });
+  };
+}
 
-  /**
-   * Adds a handler to the express router (GET /:entity/:id/). The handler
-   * return an entity searching by id.
-   * @name module:back4app-rest.entities.entityRouter#get
-   * @function
-   */
-  router.get('/:entity/:id/', function get(req, res) {
+/**
+ * Adds a handler to the express router (GET /:entity/:id/). The handler
+ * return an entity searching by id.
+ * @name module:back4app-rest.entities.entityRouter#get
+ * @function
+ */
+function getEntity(entities) {
+  return function (req, res) {
     var entityName = req.params.entity;
     var id = req.params.id;
+
+    // check if exists a session and takes the userId
+    var userId = req.session === undefined ? undefined : req.session.userId;
 
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
@@ -149,7 +183,14 @@ function entityRouter(entities, accessToken) {
 
     Entity.get(query)
       .then(function (entity) {
-        res.json(_objectToDocument(entity));
+        if (hasReadPermission(entity, userId)) {
+          res.json(_objectToDocument(entity));
+        } else {
+          res.status(403).json({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
+        }
       })
       .catch(function () {
         res.status(404).json({
@@ -157,15 +198,17 @@ function entityRouter(entities, accessToken) {
           error: 'Object Not Found'
         });
       });
-  });
+  };
+}
 
-  /**
-   * Adds a handler to the express router (GET /:entity/). The handler
-   * return a list of entities filtered by an optional query.
-   * @name module:back4app-rest.entities.entityRouter#find
-   * @function
-   */
-  router.get('/:entity/', function find(req, res) {
+/**
+ * Adds a handler to the express router (GET /:entity/). The handler
+ * return a list of entities filtered by an optional query.
+ * @name module:back4app-rest.entities.entityRouter#find
+ * @function
+ */
+function findEntities(entities) {
+  return function (req, res) {
     var entityName = req.params.entity;
 
     // check for errors
@@ -237,38 +280,40 @@ function entityRouter(entities, accessToken) {
       })
       .catch(function () {
         res.status(500).json({
-          code: 0,
-          message: 'Internal error'
+          code: 1,
+          error: 'Internal Server Error'
         });
       });
-  });
+  };
+}
 
-  /**
-   * Adds a handler to the express router (UPDATE /:entity/). It returns
-   * the updated entity instance.
-   * @name module:back4app-rest.entities.entityRouter#update
-   * @function
-   */
-  router.put('/:entity/:id/', function update(request, response) {
-    var entityName = request.params.entity;
-    var id = request.params.id;
+/**
+ * Adds a handler to the express router (UPDATE /:entity/). It returns
+ * the updated entity instance.
+ * @name module:back4app-rest.entities.entityRouter#update
+ * @function
+ */
+function updateEntity(entities) {
+  return function (req, res) {
+    var entityName = req.params.entity;
+    var id = req.params.id;
 
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
-      response.status(404).json({
+      res.status(404).json({
         code: 122,
         error: 'Entity Not Found'
       });
       return;
     }
 
-    var Entity = entities[request.params.entity];
-
-    expect(Entity).to.be.a('function');
+    var Entity = entities[entityName];
 
     Entity.get({id: id}).then(function (entity) {
-        for (var property in request.body) {
-          entity[property] = request.body[property];
+        for (var property in req.body) {
+          if (req.body.hasOwnProperty(property)) {
+            entity[property] = req.body[property];
+          }
         }
 
         // Replaces the Association ID for a Association Entity's Instance
@@ -278,43 +323,45 @@ function entityRouter(entities, accessToken) {
         entity.validate();
 
         return entity.save().then(function () {
-          response.status(200).json(_objectToDocument(entity));
+          res.status(200).json(_objectToDocument(entity));
         });
       })
       .catch(function (err) {
         if (err instanceof QueryError) {
-          response.status(404).json({
+          res.status(404).json({
             code: 123,
             error: 'Object Not Found'
           });
         } else if (err instanceof ValidationError) {
-          response.status(400).json({
+          res.status(400).json({
             code: 103,
             error: 'Invalid Entity'
           });
         } else {
           // error not treated
-          response.status(500).json({
+          res.status(500).json({
             code: 1,
             error: 'Internal Server Error'
           });
         }
       });
-  });
+  };
+}
 
-  /**
-   * Adds a handler to the express router (DELETE /:entity/:id/). The handler
-   * returns a description of error if it occurred.
-   * @name module:back4app-rest.entities.entityRouter#_delete
-   * @function
-   */
-  router.delete('/:entity/:id/', function _delete(request, response) {
-    var entityName = request.params.entity;
-    var id = request.params.id;
+/**
+ * Adds a handler to the express router (DELETE /:entity/:id/). The handler
+ * returns a description of error if it occurred.
+ * @name module:back4app-rest.entities.entityRouter#_delete
+ * @function
+ */
+function deleteEntity(entities) {
+  return function (req, res) {
+    var entityName = req.params.entity;
+    var id = req.params.id;
 
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
-      response.status(404).json({
+      res.status(404).json({
         code: 122,
         error: 'Entity Not Found'
       });
@@ -326,54 +373,18 @@ function entityRouter(entities, accessToken) {
 
     entity.delete()
       .then(function () {
-        response.status(204).end();
+        res.status(204).end();
       })
       .catch(function () {
-        response.status(500).json({
-          code: 1,
-          error: 'Internal Server Error'
-        });
-      });
-  });
-
-  /* 404 handler is the last non-error middleware */
-
-  router.use(function (req, res) {
-    res.status(404).json({
-      code: 121,
-      error: 'URL Not Found'
-    });
-  });
-
-  /* Error handler comes as last middleware */
-
-  /**
-   * Adds an error handler to the express router. It returns
-   * the message and error code.
-   * @name module:back4app-rest.entities.entityRouter#get
-   * @function
-   */
-  router.use(function (err, req, res, next) {
-    if (!err) {
-      next();
-    } else {
-      if (err instanceof SyntaxError) {
-        // malformed JSON on body
-        res.status(400).json({
-          code: 102,
-          error: 'Invalid JSON'
-        });
-      } else {
         res.status(500).json({
           code: 1,
           error: 'Internal Server Error'
         });
-      }
-    }
-  });
-
-  return router;
+      });
+  };
 }
+
+/* Helper functions */
 
 function _objectToDocument(entityObject) {
   var document = {};
@@ -421,6 +432,55 @@ function _replaceAssociationInAttributes(Entity, entity) {
   }
 }
 
+function _replacePasswordInUser(entity, entityName) {
+  return new Promise(function (resolve, reject) {
+    // only change users
+    if (entityName !== 'User') {
+      resolve(entity);
+      return;
+    }
+
+    // hash password
+    bcrypt.genSalt(10, function (err, salt) {
+      if (err) {
+        reject(err);
+      } else {
+        bcrypt.hash(entity.password, salt, function (err, hash) {
+          if (err) {
+            reject(err);
+          } else {
+            entity.password = hash;
+            resolve(entity);
+          }
+        });
+      }
+    });
+  });
+}
+
+function _replacePermissionsInUser(entity, entityName) {
+  return new Promise(function (resolve, reject) {
+    // only change users
+    if (entityName !== 'User') {
+      resolve(entity);
+      return;
+    }
+
+    // update permissions
+    var userId = entity.id;
+    entity.permissions = {};
+    entity.permissions[userId] = {read: true, write: true};
+
+    entity.save()
+      .then(function () {
+        resolve(entity);
+      })
+      .catch(function (err) {
+        reject(err);
+      });
+  });
+}
+
 function _createCleanInstance(Entity, id) {
   var stringID;
   if (typeof id === 'string') {
@@ -433,4 +493,20 @@ function _createCleanInstance(Entity, id) {
   }, {
     clean: true
   });
+}
+
+// check permission
+function hasReadPermission(entity, userId) {
+  // entity is public
+  if (entity.permissions === undefined || entity.permissions === null) {
+    return true;
+  }
+
+  // check if user has permission
+  var userPermission = entity.permissions[userId];
+  if (userPermission === undefined) {
+    return false;
+  }
+  // return user read permission of entity
+  return Boolean(userPermission.read);
 }

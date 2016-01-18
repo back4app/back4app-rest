@@ -88,13 +88,13 @@ describe('entityRouter', function () {
   }
 
   function populateDatabase() {
-    for (var i=1; i <= 150; i++) {
-      var aux = {};
-      aux.Entity = 'City';
-      aux._id = uuid.v4();
-      aux.name = 'City' + i;
-      aux.streets = i <= 50 ? 3000 : 10000;
-      cityDocuments.push(aux);
+    for (var i = 1; i <= 150; i++) {
+      var city = {};
+      city.Entity = 'City';
+      city._id = uuid.v4();
+      city.name = 'City' + i;
+      city.streets = i <= 50 ? 3000 : 10000;
+      cityDocuments.push(city);
     }
     return db.collection('City').insertMany(cityDocuments);
   }
@@ -114,9 +114,9 @@ describe('entityRouter', function () {
   }
 
   function startAPI() {
-    var router = entityRouter({
-      City: City
-    }, 'test_access_token');
+    var entities = {City: City};
+    var token = 'test_access_token';
+    var router = entityRouter({entities: entities, accessToken: token});
 
     var app = express();
     app.use('/entities', router);

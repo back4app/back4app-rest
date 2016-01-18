@@ -6,6 +6,7 @@ var expect = require('chai').expect;
 var mongodb = require('mongodb');
 var express = require('express');
 var Promise = require('bluebird');
+var bcrypt = Promise.promisifyAll(require('bcryptjs'));
 var entity = require('@back4app/back4app-entity');
 var Entity = entity.models.Entity;
 
@@ -94,10 +95,12 @@ describe('entityRouter', function () {
   }
 
   function startAPI() {
-    var router = entityRouter({
+    var entities = {
       Hurricane: Hurricane,
       CityHurricane: CityHurricane
-    }, 'test_access_token');
+    };
+    var token = 'test_access_token';
+    var router = entityRouter({entities: entities, accessToken: token});
 
     var app = express();
     app.use('/entities', router);
@@ -186,6 +189,45 @@ describe('entityRouter', function () {
             code: 122,
             error: 'Entity Not Found'
           });
+        });
+    });
+
+    it('should create User with hashed password', function () {
+      var postData = JSON.stringify({
+        username: 'user1',
+        password: 'pass1'
+      });
+
+      return post(postData, {path: '/entities/User/'})
+        .then(function (res) {
+          expect(res).to.have.property('id');
+          expect(res.username).to.be.equals('user1');
+
+          // password must be stored as hash
+          var hash = res.password;
+          expect(hash).to.not.be.equals('pass1');
+
+          // promisified with bluebird
+          return bcrypt.compareAsync('pass1', hash);
+        })
+        .then(function (result) {
+          // check password matches hash
+          expect(result).to.be.equals(true);
+        });
+    });
+
+    it('should create User with correct permissions', function () {
+      var postData = JSON.stringify({
+        username: 'user1',
+        password: 'pass1'
+      });
+
+      return post(postData, {path: '/entities/User/'})
+        .then(function (res) {
+          // check permissions
+          var permissions = {};
+          permissions[res.id] = {read: true, write: true};
+          expect(res.permissions).to.be.deep.equals(permissions);
         });
     });
   });

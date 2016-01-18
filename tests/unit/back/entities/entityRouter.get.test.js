@@ -85,31 +85,33 @@ describe('entityRouter', function () {
   // Person
   var john = {
     id: '0ca3c8c9-41a7-4967-a285-21f8cb4db2c0', Entity: 'Person',
-    name: 'John', age: 30, married: true
+    permissions: null, name: 'John', age: 30, married: true
   };
   var theo = {
     id: '5c2ca70f-d51a-4c97-a3ea-1668bde10fe7', Entity: 'Person',
-    name: 'Theo', age: 20, married: false
+    permissions: null, name: 'Theo', age: 20, married: false
   };
   var will = {
     id: 'd609db0b-b1f4-421a-a5f2-df8934ab023f', Entity: 'Person',
-    name: 'Will', age: 30, married: false
+    permissions: null, name: 'Will', age: 30, married: false
   };
   // Author
   var greg = {
     id: 'fbab76bb-92c2-4aa8-bdd7-364430d0274b', Entity: 'Author',
-    name: 'Greg', age: 21, married: false, readers: 1000, books: null
+    permissions: null, name: 'Greg', age: 21, married: false,
+    readers: 1000, books: null
   };
   // FictionAuthor
   var matt = {
     id: '07fceb36-da60-4eb4-bdad-ee9c855e626b', Entity: 'FictionAuthor',
-    name: 'Matt', age: 22, married: false, readers: 2000, books: null
+    permissions: null, name: 'Matt', age: 22, married: false,
+    readers: 2000, books: null
   };
   var phil = {
     id: 'a42ecb21-417e-470a-b8ca-1e54f04f8e01', Entity: 'FictionAuthor',
-    name: 'Phil', age: 23, married: true, readers: 3000, books: null
+    permissions: null, name: 'Phil', age: 23, married: true,
+    readers: 3000, books: null
   };
-
 
   // testing vars
   var mongoAdapter;
@@ -157,12 +159,14 @@ describe('entityRouter', function () {
   }
 
   function startAPI() {
-    var router = entityRouter({
+    var entities = {
       Person: Person,
       Author: Author,
       FictionAuthor: FictionAuthor,
       Book: Book
-    }, 'test_access_token');
+    };
+    var token = 'test_access_token';
+    var router = entityRouter({entities: entities, accessToken: token});
 
     var app = express();
     app.use('/entities', router);

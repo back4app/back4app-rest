@@ -135,11 +135,13 @@ describe('entityRouter', function () {
   }
 
   function startAPI() {
-    var router = entityRouter({
+    var entities = {
       Company: Company,
       Startup: Startup,
       Investor: Investor
-    }, 'test_access_token');
+    };
+    var token = 'test_access_token';
+    var router = entityRouter({entities: entities, accessToken: token});
 
     var app = express();
     app.use('/entities', router);
