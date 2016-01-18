@@ -116,6 +116,13 @@ describe('entityRouter', function () {
     }
   });
 
+  var Account = Entity.specify({
+    name: 'Account',
+    attributes: {
+      name: {type: 'String'}
+    }
+  });
+
   // entity JSON objects
   // Posts
   var post1 = {
@@ -127,6 +134,18 @@ describe('entityRouter', function () {
   var post2 = {
     id: '924f8e4c-56f1-4eb9-b3b5-f299ded65e9d',
     Entity: 'Post', text: 'Hello NodeJS!', picture: false, permissions: null
+  };
+  //Accounts
+  var account1 = {
+    id: '45018660-d0cc-43d4-8152-bd8bb1f38e37',
+    Entity: 'Account', name: 'Account1',
+    permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
+  };
+
+  var account2 = {
+    id: 'c94d55cc-013c-4359-bc48-6b6839220f00',
+    Entity: 'Account', name: 'Account2',
+    permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
   };
 
   // testing vars
@@ -169,24 +188,47 @@ describe('entityRouter', function () {
           text: 'Hello NodeJS!', picture: false
         }
       ]),
-      db.collection('User').insertOne({
-        Entity: 'User', _id: '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c',
-        username: 'user1',
-        // hash for password 'pass1'
-        password:
-          '$2a$10$/XqpCd8IxSufU/O3nsyWT.YsEgHiHL7eX89ywTe8oP6YNbjDqhIeW',
-        permissions: {
-          '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
-            read: true,
-            write: true
+      db.collection('Account').insertMany([
+        {Entity: 'Account', _id: '45018660-d0cc-43d4-8152-bd8bb1f38e37',
+          name: 'Account1',
+          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
+        },
+        {Entity: 'Account', _id: 'c94d55cc-013c-4359-bc48-6b6839220f00',
+          name: 'Account2',
+          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
+        }
+      ]),
+      db.collection('User').insertMany([
+        {Entity: 'User', _id: '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c',
+          username: 'user1',
+          // hash for password 'pass1'
+          password:
+            '$2a$10$/XqpCd8IxSufU/O3nsyWT.YsEgHiHL7eX89ywTe8oP6YNbjDqhIeW',
+          permissions: {
+            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+              read: true,
+              write: true
+            }
+          }
+        },
+        {Entity: 'User', _id: '2a91cb40-4344-43b0-899f-ec429e3ad384',
+          username: 'user2',
+          // hash for password 'pass2'
+          password:
+              '$2a$10$y.adCtFIYklkSkyDv8CMB.QgoB975rHP8v0wCiXP34CndKnsPIime',
+          permissions: {
+            '2a91cb40-4344-43b0-899f-ec429e3ad384': {
+              read: true,
+              write: true
+            }
           }
         }
-      })
+      ])
     ]);
   }
 
   function startAPI() {
-    var entities = {Post: Post};
+    var entities = {Post: Post, Account: Account};
     var token = 'test_access_token';
     var store = new MemoryStore();
 
@@ -288,6 +330,52 @@ describe('entityRouter', function () {
   });
 
   describe('GET /:entity/', function () {
+    it('should return only posts user1 has permission', function () {
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Post/';
+          return fetchJSON(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          // the result was sorted by {id: 1}
+          expect(res.json).to.be.deep.equals({results: [post2, post1]});
+        });
+    });
+
+    it('should return all entities because user1 has permission', function () {
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Account/';
+          return fetchJSON(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals({results: [account1, account2]});
+        });
+    });
+
+    it('should return empty list because user2 has permission to anyone',
+        function () {
+      return login('user2', 'pass2')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Account/';
+          return fetchJSON(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals({results: []});
+        });
+    });
 
   });
 });
