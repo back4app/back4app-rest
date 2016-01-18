@@ -183,7 +183,7 @@ function getEntity(entities) {
 
     Entity.get(query)
       .then(function (entity) {
-        if (hasReadPermission(entity, userId)) {
+        if (_hasReadPermission(entity, userId)) {
           res.json(_objectToDocument(entity));
         } else {
           res.status(403).json({
@@ -210,6 +210,9 @@ function getEntity(entities) {
 function findEntities(entities) {
   return function (req, res) {
     var entityName = req.params.entity;
+
+    // check if exists a session and takes the userId
+    var userId = req.session === undefined ? undefined : req.session.userId;
 
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
@@ -272,9 +275,10 @@ function findEntities(entities) {
 
     Entity.find(query, params)
       .then(function (entities) {
+        var entitiesWithPermission = _entitiesPermission(entities, userId);
         var results = [];
-        for (var i = 0; i < entities.length; i++) {
-          results.push(_objectToDocument(entities[i]));
+        for (var i = 0; i < entitiesWithPermission.length; i++) {
+          results.push(_objectToDocument(entitiesWithPermission[i]));
         }
         res.json({results: results});
       })
@@ -298,9 +302,6 @@ function updateEntity(entities) {
     var entityName = req.params.entity;
     var id = req.params.id;
 
-    // check if exists a session and takes the userId
-    var userId = req.session === undefined ? undefined : req.session.userId;
-
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
       res.status(404).json({
@@ -313,7 +314,6 @@ function updateEntity(entities) {
     var Entity = entities[entityName];
 
     Entity.get({id: id}).then(function (entity) {
-      if (_hasWritePermission(entity, userId)) {
         for (var property in req.body) {
           if (req.body.hasOwnProperty(property)) {
             entity[property] = req.body[property];
@@ -329,32 +329,26 @@ function updateEntity(entities) {
         return entity.save().then(function () {
           res.status(200).json(_objectToDocument(entity));
         });
-      } else {
-        res.status(403).json({
-          code: 118,
-          error: 'Operation Forbidden'
-        });
-      }
-    })
-    .catch(function (err) {
-      if (err instanceof QueryError) {
-        res.status(404).json({
-          code: 123,
-          error: 'Object Not Found'
-        });
-      } else if (err instanceof ValidationError) {
-        res.status(400).json({
-          code: 103,
-          error: 'Invalid Entity'
-        });
-      } else {
-        // error not treated
-        res.status(500).json({
-          code: 1,
-          error: 'Internal Server Error'
-        });
-      }
-    });
+      })
+      .catch(function (err) {
+        if (err instanceof QueryError) {
+          res.status(404).json({
+            code: 123,
+            error: 'Object Not Found'
+          });
+        } else if (err instanceof ValidationError) {
+          res.status(400).json({
+            code: 103,
+            error: 'Invalid Entity'
+          });
+        } else {
+          // error not treated
+          res.status(500).json({
+            code: 1,
+            error: 'Internal Server Error'
+          });
+        }
+      });
   };
 }
 
@@ -505,15 +499,16 @@ function _createCleanInstance(Entity, id) {
   });
 }
 
-// check read permission
-function hasReadPermission(entity, userId) {
+// check entity permission
+function _hasReadPermission(entity, userId) {
   // entity is public
   if (entity.permissions === undefined || entity.permissions === null) {
     return true;
   }
-
   // check if user has permission
-  var userPermission = entity.permissions[userId];
+  var userPermission = entity.permissions[userId] || entity.permissions['*'];
+
+  //user has no permission
   if (userPermission === undefined) {
     return false;
   }
@@ -521,18 +516,13 @@ function hasReadPermission(entity, userId) {
   return Boolean(userPermission.read);
 }
 
-// check write permission
-function _hasWritePermission(entity, userId) {
-  // entity is public
-  if (entity.permissions === undefined || entity.permissions === null) {
-    return true;
+// check permission of entities array and returns only allowed ones
+function _entitiesPermission(entities, userId) {
+  var entitiesWithPermission = [];
+  for (var i=0; i < entities.length; i++) {
+    if (_hasReadPermission(entities[i], userId)) {
+      entitiesWithPermission.push(entities[i]);
+    }
   }
-
-  // check if user has permission
-  var userPermission = entity.permissions[userId] || entity.permissions['*'];
-  if (userPermission === undefined) {
-    return false;
-  }
-  // return user write permission of entity
-  return Boolean(userPermission.write);
+  return entitiesWithPermission;
 }
