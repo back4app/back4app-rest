@@ -264,23 +264,6 @@ describe('entityRouter', function () {
         {Entity: 'Post', _id: '15358f84-cc88-4147-8f85-9c09cdad9cf7',
           text: 'Hello AngularJS!', picture: false,
           permissions: {'*': {read: true}}
-        },
-        {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
-          text: 'Written by user1', picture: true,
-          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
-            read: true,
-            write: true
-          }}
-        },
-        {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
-          text: 'Hello South America!', picture: false,
-          permissions: {
-            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
-            '*': {
-              read: true,
-              write: true
-            }
-          }
         }
       ]),
       db.collection('Account').insertMany([
@@ -523,6 +506,28 @@ describe('entityRouter', function () {
   });
 
 describe('UPDATE /:entity/:id', function () {
+
+  before(function () {
+    return db.collection('Post').insertMany([
+      {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
+        text: 'Written by user1', picture: true,
+        permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+          read: true,
+          write: true
+        }}
+      },
+      {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
+        text: 'Hello South America!', picture: false,
+        permissions: {
+          '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
+          '*': {
+            read: true,
+            write: true
+          }
+        }
+      }
+    ]);
+  });
 
     it('should update Entity because this user has permission', function () {
       var updatedData = JSON.stringify({
