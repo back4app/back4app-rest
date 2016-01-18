@@ -524,8 +524,5 @@ function _entitiesPermission(entities, userId) {
       entitiesWithPermission.push(entities[i]);
     }
   }
-  if (entitiesWithPermission.length === 0) {
-    return [];
-  }
   return entitiesWithPermission;
 }
