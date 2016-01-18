@@ -363,6 +363,9 @@ function deleteEntity(entities) {
     var entityName = req.params.entity;
     var id = req.params.id;
 
+    // check if exists a session and takes the userId
+    var userId = req.session === undefined ? undefined : req.session.userId;
+
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
       res.status(404).json({
@@ -373,16 +376,38 @@ function deleteEntity(entities) {
     }
 
     var Entity = entities[entityName];
-    var entity = new Entity({id: id});
 
-    entity.delete()
-      .then(function () {
-        res.status(204).end();
+    // create query to filter by id and match only current entity and
+    // it's specifications
+    var query = {
+      id: id,
+      Entity: {$in: _listEntityAndSpecifications(Entity)}
+    };
+
+    Entity.get(query)
+      .then(function (entity) {
+        if (_hasWritePermission(entity, userId)) {
+          entity.delete()
+            .then(function () {
+              res.status(204).end();
+            })
+            .catch(function () {
+              res.status(500).json({
+                code: 1,
+                error: 'Internal Server Error'
+              });
+            });
+        } else {
+          res.status(403).json({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
+        }
       })
       .catch(function () {
-        res.status(500).json({
-          code: 1,
-          error: 'Internal Server Error'
+        res.status(404).json({
+          code: 123,
+          error: 'Object Not Found'
         });
       });
   };
@@ -525,4 +550,20 @@ function _entitiesPermission(entities, userId) {
     }
   }
   return entitiesWithPermission;
+}
+
+// check write permission
+function _hasWritePermission(entity, userId) {
+  // entity is public
+  if (entity.permissions === undefined || entity.permissions === null) {
+    return true;
+  }
+
+  // check if user has permission
+  var userPermission = entity.permissions[userId];
+  if (userPermission === undefined) {
+    return false;
+  }
+  // return user write permission of entity
+  return Boolean(userPermission.write);
 }
