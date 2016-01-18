@@ -57,6 +57,45 @@ function fetchJSON(path, headers) {
   });
 }
 
+function update(postData, path, headers) {
+  return new Promise(function (resolve, reject) {
+    var options = {
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: path,
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': 'test_access_token'
+      }
+    };
+
+    headers = headers || {};
+    if (headers.sessionToken !== undefined) {
+      options.headers['X-Session-Token'] = headers.sessionToken;
+    }
+
+    var req = http.request(options, function (response) {
+      var body = '';
+      response.on('error', function (err) {
+        reject(err);
+      });
+      response.on('data', function (d) { body += d; });
+      response.on('end', function () {
+        response.body = body;
+        try {
+          response.json = JSON.parse(body);
+        } catch (e) {
+          // invalid JSON, do nothing
+        }
+        resolve(response);
+      });
+    });
+    req.write(postData);
+    req.end();
+  });
+}
+
 function login(username, password) {
   return new Promise(function (resolve, reject) {
     var postData = JSON.stringify({
@@ -152,6 +191,35 @@ describe('entityRouter', function () {
     id: 'c94d55cc-013c-4359-bc48-6b6839220f00',
     Entity: 'Account', name: 'Account2',
     permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
+  };
+
+  var updatedPost1 = {
+    id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
+    Entity: 'Post', text: 'Written by user1!', picture: false,
+    permissions: {
+      '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+        read: true,
+        write: true
+      }
+    }
+  };
+
+  var updatedPost2 = {
+    id: '924f8e4c-56f1-4eb9-b3b5-f299ded65e9d',
+    Entity: 'Post', picture: false, text: 'Written by anyone!',
+    permissions: null
+  };
+
+  var updatedPost3 = {
+    id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
+    Entity: 'Post', picture: true, text: 'Anyone can modify, except user1',
+    permissions: {
+      '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
+      '*': {
+        read: true,
+        write: true
+      }
+    }
   };
 
   // testing vars
@@ -435,5 +503,142 @@ describe('entityRouter', function () {
         });
     });
 
+  });
+
+  describe('UPDATE /:entity/:id', function () {
+
+    before(function () {
+      return db.collection('Post').insertMany([
+        {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
+          text: 'Written by user1', picture: true,
+          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+            read: true,
+            write: true
+          }}
+        },
+        {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
+          text: 'Hello South America!', picture: false,
+          permissions: {
+            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
+            '*': {
+              read: true,
+              write: true
+            }
+          }
+        }
+      ]);
+    });
+
+    it('should update Entity because this user has permission', function () {
+      var updatedData = JSON.stringify({
+        text: 'Written by user1!',
+        picture: false
+      });
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Post/fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d/';
+          return update(updatedData, url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals(updatedPost1);
+        });
+    });
+
+    it('should return 403 code because the user does not have permission',
+      function () {
+        var updatedData = JSON.stringify({
+          text: 'Written by user1!',
+          picture: false
+        });
+        return login('user1', 'pass1')
+          .then(function (res) {
+            return res.json.sessionToken;
+          })
+          .then(function (sessionToken) {
+            var url = '/entities/Post/4d0e9795-c692-4b0f-b9c1-8ddeece6aa8b/';
+            return update(updatedData, url, {sessionToken: sessionToken});
+          })
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(403);
+            expect(res.json).to.be.deep.equals({
+              code: 118,
+              error: 'Operation Forbidden'
+            });
+          });
+      });
+
+    it('should return 403 code because entity is not public', function () {
+      var updatedData = JSON.stringify({
+        text: 'Written by anyone!',
+        picture: false
+      });
+      return update(updatedData,
+        '/entities/Post/4d0e9795-c692-4b0f-b9c1-8ddeece6aa8b/')
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(403);
+          expect(res.json).to.be.deep.equals({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
+        });
+    });
+
+    it('should get entity by id because this instance has public permission',
+      function () {
+        var updatedData = JSON.stringify({
+          text: 'Written by anyone!',
+          picture: false
+        });
+        return update(updatedData,
+          '/entities/Post/924f8e4c-56f1-4eb9-b3b5-f299ded65e9d/')
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(200);
+            expect(res.json).to.be.deep.equals(updatedPost2);
+          });
+      }
+    );
+
+    it('"*": should get entity by id because this instance has public' +
+      ' permission',
+      function () {
+        var updatedData = JSON.stringify({
+          text: 'Anyone can modify, except user1',
+          picture: true
+        });
+        return update(updatedData,
+          '/entities/Post/e5d30ee6-156a-4710-b6e9-891fd19d02c0/')
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(200);
+            expect(res.json).to.be.deep.equals(updatedPost3);
+          });
+      }
+    );
+
+    it('"*": should return 403 code because the user does not have permission',
+      function () {
+        var updatedData = JSON.stringify({
+          text: 'I CANT WRITE!',
+          picture: false
+        });
+        return login('user1', 'pass1')
+          .then(function (res) {
+            return res.json.sessionToken;
+          })
+          .then(function (sessionToken) {
+            var url = '/entities/Post/e5d30ee6-156a-4710-b6e9-891fd19d02c0/';
+            return update(updatedData, url, {sessionToken: sessionToken});
+          })
+          .then(function (res) {
+            expect(res.statusCode).to.be.equals(403);
+            expect(res.json).to.be.deep.equals({
+              code: 118,
+              error: 'Operation Forbidden'
+            });
+          });
+      });
   });
 });
