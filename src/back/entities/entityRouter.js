@@ -183,7 +183,7 @@ function getEntity(entities) {
 
     Entity.get(query)
       .then(function (entity) {
-        if (hasReadPermission(entity, userId)) {
+        if (_hasReadPermission(entity, userId)) {
           res.json(_objectToDocument(entity));
         } else {
           res.status(403).json({
@@ -210,6 +210,9 @@ function getEntity(entities) {
 function findEntities(entities) {
   return function (req, res) {
     var entityName = req.params.entity;
+   
+    // check if exists a session and takes the userId
+    var userId = req.session === undefined ? undefined : req.session.userId;
 
     // check for errors
     if (!entities.hasOwnProperty(entityName)) {
@@ -272,9 +275,10 @@ function findEntities(entities) {
 
     Entity.find(query, params)
       .then(function (entities) {
+        var entitiesWithPermission = _entitiesPermission(entities, userId);
         var results = [];
-        for (var i = 0; i < entities.length; i++) {
-          results.push(_objectToDocument(entities[i]));
+        for (var i = 0; i < entitiesWithPermission.length; i++) {
+          results.push(_objectToDocument(entitiesWithPermission[i]));
         }
         res.json({results: results});
       })
@@ -495,13 +499,12 @@ function _createCleanInstance(Entity, id) {
   });
 }
 
-// check permission
-function hasReadPermission(entity, userId) {
+// check entity permission
+function _hasReadPermission(entity, userId) {
   // entity is public
   if (entity.permissions === undefined || entity.permissions === null) {
     return true;
   }
-
   // check if user has permission
   var userPermission = entity.permissions[userId];
   if (userPermission === undefined) {
@@ -509,4 +512,18 @@ function hasReadPermission(entity, userId) {
   }
   // return user read permission of entity
   return Boolean(userPermission.read);
+}
+
+// check permission of entities array and returns only allowed ones
+function _entitiesPermission(entities, userId) {
+  var entitiesWithPermission = [];
+  for (var i=0; i < entities.length; i++) {
+    if (_hasReadPermission(entities[i], userId)) {
+      entitiesWithPermission.push(entities[i]);
+    }
+  }
+  if (entitiesWithPermission.length === 0) {
+    return [];
+  }
+  return entitiesWithPermission;
 }
