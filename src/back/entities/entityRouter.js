@@ -210,7 +210,7 @@ function getEntity(entities) {
 function findEntities(entities) {
   return function (req, res) {
     var entityName = req.params.entity;
-   
+
     // check if exists a session and takes the userId
     var userId = req.session === undefined ? undefined : req.session.userId;
 
@@ -506,7 +506,9 @@ function _hasReadPermission(entity, userId) {
     return true;
   }
   // check if user has permission
-  var userPermission = entity.permissions[userId];
+  var userPermission = entity.permissions[userId] || entity.permissions['*'];
+
+  //user has no permission
   if (userPermission === undefined) {
     return false;
   }
