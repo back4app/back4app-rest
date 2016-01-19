@@ -34,11 +34,11 @@ using HTTP Methods:
 
 | Method | Path | Action |
 | --- | --- | --- |
-| GET | /entity/ | Returns all the data from this Entity Instances. (Accepts a [MongoDB Query](https://docs.mongodb.org/manual/tutorial/query-documents/)) |
-| POST | /entity/ | Creates a new Entity Instance with the data passed. |
-| GET | /entity/id/ | Returns the data from the Entity Instance that matches with the given ID. |
-| PUT | /entity/id/ | Updates the data from the Entity Instance that matches with the given ID. |
-| DELETE | /entity/id/ | Delete the data from the Entity Instance that matches with the given ID. |
+| GET | /:entity/ | Returns all the data from this Entity Instances. (Accepts a [MongoDB Query](https://docs.mongodb.org/manual/tutorial/query-documents/)) |
+| POST | /:entity/ | Creates a new Entity Instance with the data passed. |
+| GET | /:entity/id/ | Returns the data from the Entity Instance that matches with the given ID. |
+| PUT | /:entity/id/ | Updates the data from the Entity Instance that matches with the given ID. |
+| DELETE | /:entity/id/ | Delete the data from the Entity Instance that matches with the given ID. |
 
 ## How do I use it?
 
@@ -48,7 +48,7 @@ Let's see it with some examples.
 
 ---
 
-##### GET on /entity
+##### GET on /:entity/
 
 On MyProject project, I've created an Person Entity. It has just only
 one instance saved as a document on my database.
@@ -77,7 +77,7 @@ lots of data. We can also limit the result. See more on Queries section.
 
 ---
 
-##### POST on /entity
+##### POST on /:entity/
 
 Now, we want to insert a new Entity Instance. The POST method will take a JSON.
 
@@ -111,7 +111,7 @@ It should be inserted on registered database.
 ---
 
 
-##### GET on /entity:id
+##### GET on /:entity/:id/
 
 What about seeing ours new Entity Instance, specifically?
 If we make this request
@@ -163,7 +163,7 @@ Returning this
 ---
 
 
-##### PUT on /entity:id
+##### PUT on /:entity/:id/
 
 We want to change the current job of our Person.
 If we make this request
@@ -196,7 +196,7 @@ inserted on database.
 ---
 
 
-##### DELETE on /entity:id
+##### DELETE on /:entity/:id/
 
 So, we have this one Person that we want to remove from our database 
 If we make this request
@@ -222,7 +222,7 @@ Status Code and Errors section.
 ##### Query Constrains
 
 To put constrains on the objects found, you may use the query URL parameter.
-For example, you make a `GET` on `/entity/Person`, but you will receive a lot of
+For example, you make a `GET` on `/:entity/Person`, but you will receive a lot of
 data that you may want to filter.
 
 Using the the parameter `query`, you will be able to send a query to filter the
