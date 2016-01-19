@@ -310,8 +310,8 @@ X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 and its response on a json format: 
 ```json
 {   
-    code : 118,
-    error : 'Operation Forbidden'
+   "code" : 118,
+   "error" : "Operation Forbidden"
 }
 ```
 This error means that you are not allowed to delete this instance of Person.
