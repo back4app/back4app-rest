@@ -158,7 +158,7 @@ describe('entityRouter', function () {
         req.end();
       });
 
-    it('should return status code 204 on /:entity/ with invalid id on path',
+    it('should return status code 404 on /:entity/ with invalid id on path',
       function (done) {
         var req = http.request({
           hostname: 'localhost',
@@ -169,7 +169,7 @@ describe('entityRouter', function () {
             'X-Access-Token': 'test_access_token'
           }
         }, function (response) {
-          expect(response.statusCode).to.equal(204);
+          expect(response.statusCode).to.equal(404);
           done();
         });
 
