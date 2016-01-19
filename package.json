@@ -1,6 +1,6 @@
 {
   "name": "@back4app/back4app-rest",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "back{4}app rest api",
   "main": "index.js",
   "scripts": {
