@@ -386,7 +386,6 @@ function deleteEntity(entities) {
     }
 
     var Entity = entities[entityName];
-    var entity = new Entity({id: id});
 
     // create query to filter by id and match only current entity and
     // it's specifications
@@ -561,4 +560,20 @@ function _entitiesPermission(entities, userId) {
     }
   }
   return entitiesWithPermission;
+}
+
+// check write permission
+function _hasWritePermission(entity, userId) {
+  // entity is public
+  if (entity.permissions === undefined || entity.permissions === null) {
+    return true;
+  }
+
+  // check if user has permission
+  var userPermission = entity.permissions[userId] || entity.permissions['*'];
+  if (userPermission === undefined) {
+    return false;
+  }
+  // return user write permission of entity
+  return Boolean(userPermission.write);
 }

@@ -57,6 +57,48 @@ function fetchJSON(path, headers) {
   });
 }
 
+function _delete(path, headers) {
+  return new Promise(function (resolve, reject) {
+    var options = {
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: path,
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': 'test_access_token'
+      }
+    };
+
+    headers = headers || {};
+    if (headers.sessionToken !== undefined) {
+      options.headers['X-Session-Token'] = headers.sessionToken;
+    }
+
+    var req = http.request(options, function (res) {
+      var body = '';
+
+      res.setEncoding('utf8');
+
+      res.on('data', function (d) { body += d; });
+
+      res.on('end', function () {
+        res.body = body;
+        try {
+          res.json = JSON.parse(body);
+        } catch (e) {
+          // invalid JSON, do nothing
+        }
+        resolve(res);
+      });
+    });
+    req.on('error', function (err) {
+      reject(err);
+    });
+    req.end();
+  });
+}
+
 function update(postData, path, headers) {
   return new Promise(function (resolve, reject) {
     var options = {
@@ -167,7 +209,9 @@ describe('entityRouter', function () {
   var post1 = {
     id: 'e8e5532c-8444-4a02-bc31-2a18b2fae9b7',
     Entity: 'Post', text: 'Hello World!', picture: true,
-    permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
+    permissions: {
+      '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true, write: true}
+    }
   };
 
   var post2 = {
@@ -190,7 +234,10 @@ describe('entityRouter', function () {
   var account2 = {
     id: 'c94d55cc-013c-4359-bc48-6b6839220f00',
     Entity: 'Account', name: 'Account2',
-    permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
+    permissions: {
+      '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true},
+      '*': {write: true}
+    }
   };
 
   var updatedPost1 = {
@@ -230,7 +277,7 @@ describe('entityRouter', function () {
   // setup
   before(function () {
     return Promise.all([
-      openConnections().then(populateDatabase),
+      openConnections(),
       startAPI()
     ]);
   });
@@ -252,7 +299,9 @@ describe('entityRouter', function () {
       db.collection('Post').insertMany([
         {Entity: 'Post', _id: 'e8e5532c-8444-4a02-bc31-2a18b2fae9b7',
           text: 'Hello World!', picture: true,
-          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
+          permissions: {
+            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true, write: true}
+          }
         },
         {Entity: 'Post', _id: '4d0e9795-c692-4b0f-b9c1-8ddeece6aa8b',
           text: 'Hello Back{4}app!', picture: true,
@@ -273,7 +322,10 @@ describe('entityRouter', function () {
         },
         {Entity: 'Account', _id: 'c94d55cc-013c-4359-bc48-6b6839220f00',
           name: 'Account2',
-          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true}}
+          permissions: {
+            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c':
+            {read: true}, '*': {write: true}
+          }
         },
         {Entity: 'Account', _id: '827b625a-80ed-4f35-b843-12958fdafa81',
           name: 'Account3', permissions: {'*': {}}
@@ -352,6 +404,14 @@ describe('entityRouter', function () {
       db.close()
     ]);
   }
+
+  beforeEach(function () {
+    return populateDatabase();
+  });
+
+  afterEach(function () {
+    return clearDatabase();
+  });
 
   // test cases
   describe('GET /:entity/:id/', function () {
@@ -509,24 +569,24 @@ describe('entityRouter', function () {
 
     before(function () {
       return db.collection('Post').insertMany([
-        {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
-          text: 'Written by user1', picture: true,
-          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
-            read: true,
-            write: true
-          }}
-        },
-        {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
-          text: 'Hello South America!', picture: false,
-          permissions: {
-            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
-            '*': {
+          {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
+            text: 'Written by user1', picture: true,
+            permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
               read: true,
               write: true
+            }}
+          },
+          {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
+            text: 'Hello South America!', picture: false,
+            permissions: {
+              '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
+              '*': {
+                read: true,
+                write: true
+              }
             }
           }
-        }
-      ]);
+        ]);
     });
 
     it('should update Entity because this user has permission', function () {
@@ -640,5 +700,168 @@ describe('entityRouter', function () {
             });
           });
       });
+  });
+
+  describe('DELETE /entity/:id', function () {
+    it('should return status 204 because user has write permission',
+        function () {
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Post/e8e5532c-8444-4a02-bc31-2a18b2fae9b7';
+          return _delete(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(204);
+          expect(res.body).to.be.deep.equals('');
+        });
+    });
+
+    it('should return status 403 because user has no permission', function () {
+      return login('user2', 'pass2')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Post/4d0e9795-c692-4b0f-b9c1-8ddeece6aa8b';
+          return _delete(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(403);
+          expect(res.json).to.be.deep.equals({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
+        });
+    });
+
+    it('should return status 204 because entity has public permission',
+        function () {
+      return login('user2', 'pass2')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Post/924f8e4c-56f1-4eb9-b3b5-f299ded65e9d';
+          return _delete(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(204);
+          expect(res.body).to.be.deep.equals('');
+        });
+    });
+
+    it('should return status 403 because entity has only public read ' +
+        'permission', function () {
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Post/15358f84-cc88-4147-8f85-9c09cdad9cf7';
+          return _delete(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(403);
+          expect(res.json).to.be.deep.equals({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
+        });
+    });
+
+    it('should return status 404 due to inexistent id', function () {
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Account/e8e5532c-8444-4a02-bc31-2a18b2fa1y2g';
+          return _delete(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(404);
+          expect(res.json).to.be.deep.equals({
+            code: 123,
+            error: 'Object Not Found'
+          });
+        });
+    });
+
+    it('should return status 403 because this user has no write permission' +
+        ' preceding the public permission', function () {
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Account/c94d55cc-013c-4359-bc48-6b6839220f00';
+          return _delete(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(403);
+          expect(res.json).to.be.deep.equals({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
+        });
+    });
+
+    it('should return status 204 because this user has write permission to' +
+        ' this entity', function () {
+      return login('user2', 'pass2')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Account/c94d55cc-013c-4359-bc48-6b6839220f00';
+          return _delete(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(204);
+          expect(res.body).to.be.deep.equals('');
+        });
+    });
+
+    it('should return status 403 because no one has write permission to ' +
+        'this entity', function () {
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Account/827b625a-80ed-4f35-b843-12958fdafa81';
+          return _delete(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(403);
+          expect(res.json).to.be.deep.equals({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
+        });
+    });
+
+    it('should return status 403 because no one has write permission to ' +
+        'this entity', function () {
+      return login('user2', 'pass2')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Account/827b625a-80ed-4f35-b843-12958fdafa81';
+          return _delete(url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(403);
+          expect(res.json).to.be.deep.equals({
+            code: 118,
+            error: 'Operation Forbidden'
+          });
+        });
+    });
+
   });
 });
