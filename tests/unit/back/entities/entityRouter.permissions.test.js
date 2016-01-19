@@ -567,7 +567,7 @@ describe('entityRouter', function () {
 
   describe('UPDATE /:entity/:id', function () {
 
-    before(function () {
+    beforeEach(function () {
       return db.collection('Post').insertMany([
           {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
             text: 'Written by user1', picture: true,
