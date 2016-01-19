@@ -20,7 +20,7 @@ For example, if you want the user with id `"d23a49d8-e38a-4257-a44f-7ae927cc2259
 
 ## Signing Up
 
-`User` is a builtin entity that holds authentication data (username and password). Creating a new user follows the same API as creating any other entity:
+`User` is a built-in entity that holds authentication data (username and password). Creating a new user follows the same API as creating any other entity:
 
 ```http
 POST /entities/User/
@@ -106,7 +106,7 @@ The result is a success response with an empty JSON:
 
 ## Defining Permissions
 
-In order to define permissions in an entity, the `permissions` attribute must the set. For example, to create an entity with read and write access to one user:
+In order to define permissions on an entity, the `permissions` attribute must the set. For example, to create an entity with read and write access to one user:
 
 ```http
 POST /entities/Book/
@@ -148,7 +148,7 @@ If the `permissions` attribute is not present or set to `null`, then the entity 
 
 ## Querying Objects with Permissions
 
-If an object has permissions defined, it will only be visible to users on the permission list. For example, in a database with two books: one public and one accesible to the user `jack`, the following queries may be performed.
+If an object has permissions defined, it will only be visible to users on the permission list. For example, in a database with two books, one public and one accesible to the user `jack`, the following queries may be performed.
 
 A query with session token (user with id `d23a49d8-e38a-4257-a44f-7ae927cc2259` logged in before):
 
@@ -217,4 +217,4 @@ When querying for a list of entities, the ones without access to the given user 
 
 ## Modifying/Deleting Objects with Permissions
 
-The same rules as above apply to updating/deleting an object, except the logged user must have write access to the object. If the object has no permission declared, all users have write access to it.
+The same rules as above apply to updating/deleting an object, except the logged user must have write access to the object. If the object has no permission declared, all users have read and write access to it.

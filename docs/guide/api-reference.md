@@ -107,6 +107,7 @@ It will return us this
 
 It should be inserted on registered database.
 
+If you want to create an entity with access restrictions, follow our [API Security](tutorial-security.html) Tutorial
 
 ---
 
@@ -298,6 +299,24 @@ that will always have "message" and "code".
 If you try to do a GET Request to an nonexistent entity/id, it will return
 the 404 code, also used to not found routes.
 The body shall show the difference, between not finding a route, page or a resource.
+
+An example of unsuccessful request:
+```http
+DELETE /entities/Person/xxxxx02
+Content-Type: application/x-www-form-urlencoded
+X-Access-Token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X-Application-ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+and its response on a json format: 
+```json
+{   
+    code : 118,
+    error : 'Operation Forbidden'
+}
+```
+This error means that you are not allowed to delete this instance of Person.
+ 
+See below a complete list of errors and status code.
 
 | Status Code | HTTP Status | Error |
 | --- | --- | --- |
