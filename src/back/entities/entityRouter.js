@@ -276,7 +276,7 @@ function findEntities(entities) {
     //Filters by permission
     // condition 1: if user has permission
     var condition = {};
-    condition['permissions.'+userId+'.read'] = true;
+    condition['permissions.' + userId + '.read'] = true;
     // condition 2: if is public and user is not "blocked"
     var condition2 = {};
     condition2['permissions.*.read'] = true;
