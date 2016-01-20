@@ -275,10 +275,9 @@ function findEntities(entities) {
 
     Entity.find(query, params)
       .then(function (entities) {
-        var entitiesWithPermission = _entitiesPermission(entities, userId);
         var results = [];
-        for (var i = 0; i < entitiesWithPermission.length; i++) {
-          results.push(_objectToDocument(entitiesWithPermission[i]));
+        for (var i = 0; i < entities.length; i++) {
+          results.push(_objectToDocument(entities[i]));
         }
         res.json({results: results});
       })
@@ -549,17 +548,6 @@ function _hasReadPermission(entity, userId) {
   }
   // return user read permission of entity
   return Boolean(userPermission.read);
-}
-
-// check permission of entities array and returns only allowed ones
-function _entitiesPermission(entities, userId) {
-  var entitiesWithPermission = [];
-  for (var i=0; i < entities.length; i++) {
-    if (_hasReadPermission(entities[i], userId)) {
-      entitiesWithPermission.push(entities[i]);
-    }
-  }
-  return entitiesWithPermission;
 }
 
 // check write permission
