@@ -273,6 +273,26 @@ function findEntities(entities) {
     // update query to match only current entity and it's specifications
     query.Entity = {$in: _listEntityAndSpecifications(Entity)};
 
+    //Filters by permission
+    // condition 1: if user has permission
+    var condition = {};
+    condition['permissions.'+userId+'.read'] = true;
+    // condition 2: if is public and user is not "blocked"
+    var condition2 = {};
+    condition2['permissions.*.read'] = true;
+    //  either the user does not exist (which means it is not "blocked")...
+    var or1 = {};
+    or1['permissions.' + userId] = {$exists: false};
+    //  ... or it is allowed.
+    var or2 = {};
+    or2['permissions.' + userId + '.read'] = true;
+    condition2.$or = [or1, or2];
+    query.$or = [
+      {'permissions': null},
+      condition,
+      condition2
+    ];
+
     Entity.find(query, params)
       .then(function (entities) {
         var results = [];
