@@ -358,9 +358,9 @@ function updateEntity(entities) {
         }
 
         //hash password if changed
-        _replacePasswordInUser(Entity, entity)
-          .then(function () {
-            entity.save().then(function (entity) {
+        _replacePasswordInUser(entity, entityName)
+          .then(function (entity) {
+            entity.save().then(function () {
               _replacePermissionsInUser(entity, entityName)
                 .then(function (entity) {
                   res.status(200).json(_objectToDocument(entity));
@@ -385,7 +385,7 @@ function updateEntity(entities) {
                   }
                 });
             });
-          })
+          });
       } else {
         res.status(403).json({
           code: 118,
@@ -520,7 +520,6 @@ function _replaceAssociationInAttributes(Entity, entity) {
       }
     } else if (attrName !== 'id') {
       entity[attrName] = attribute.parseDataValue(entity[attrName]);
-      console.log(entity[attrName]);
     }
   }
 }

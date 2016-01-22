@@ -415,7 +415,7 @@ describe('entityRouter', function () {
   });
 
   // test cases
-  describe.skip('GET /:entity/:id/', function () {
+  describe('GET /:entity/:id/', function () {
     it('should get entity by id because this user has permission', function () {
       return login('user1', 'pass1')
         .then(function (res) {
@@ -500,7 +500,7 @@ describe('entityRouter', function () {
 
   });
 
-  describe.skip('GET /:entity/', function () {
+  describe('GET /:entity/', function () {
     it('should return only posts user1 has permission', function () {
       return login('user1', 'pass1')
         .then(function (res) {
@@ -568,23 +568,9 @@ describe('entityRouter', function () {
 
   describe('UPDATE /:entity/:id', function () {
 
-    var TableLeg = Entity.specify({
-      name: 'TableLeg',
-      attributes: {
-        legs: {type: 'Number'}
-      }
-    });
-
-    var Table = Entity.specify({
-      name: 'Table',
-      attributes: {
-        tableLegs: {type: 'TableLegs', multiplicity:'*', default: undefined }
-      }
-    });
-
-
     beforeEach(function () {
-      return db.collection('Post').insertMany([
+      return Promise.all([
+        db.collection('Post').insertMany([
           {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
             text: 'Written by user1', picture: true,
             permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
@@ -602,10 +588,11 @@ describe('entityRouter', function () {
               }
             }
           }
-        ]);
+        ])
+      ]);
     });
 
-    it.only('should update Entity because this user has permission', function () {
+    it('should update Entity because this user has permission', function () {
       var updatedData = JSON.stringify({
         text: 'Written by user1!',
         picture: false
@@ -688,7 +675,7 @@ describe('entityRouter', function () {
         return update(updatedData,
           '/entities/Post/e5d30ee6-156a-4710-b6e9-891fd19d02c0/')
           .then(function (res) {
-            //expect(res.statusCode).to.be.equals(200);
+            expect(res.statusCode).to.be.equals(200);
             expect(res.json).to.be.deep.equals(updatedPost3);
           });
       }
@@ -731,8 +718,8 @@ describe('entityRouter', function () {
         })
         .then(function (res) {
           expect(res.statusCode).to.be.equals(200);
-
-          expect(res.json.id).to.be.equals('7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c');
+          expect(res.json.id).to.be
+            .equals('7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c');
           expect(res.json.username).to.be.equals('user1');
 
           // password must be stored as hash
@@ -775,35 +762,11 @@ describe('entityRouter', function () {
         .then(function (res) {
           expect(res.statusCode).to.be.equals(200);
           expect(res.json).to.be.deep.equals(updatedPost);
-      });
-    });
-
-    it('should update an Entity\'s instance that has id as an object' +
-        'when it is an association', function () {
-      var updatedData = JSON.stringify({
-        text: 'Hello South America!',
-        picture: false,
-        account: account1,
-        permissions: {
-          '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
-          '*': {
-            read: true,
-            write: true
-          }
-        }
-      });
-
-      var url = '/entities/Post/e5d30ee6-156a-4710-b6e9-891fd19d02c0';
-      return update(updatedData, url)
-        .then(function (res) {
-          expect(res.statusCode).to.be.equals(200);
-          expect(res.json.account.id).to.equal('45018660-d0cc-43d4-8152-bd8bb1f38e37');
-          expect(res.json.account.Entity).to.equal('Account');
         });
     });
   });
 
-  describe.skip('DELETE /entity/:id', function () {
+  describe('DELETE /entity/:id', function () {
     it('should return status 204 because user has write permission',
         function () {
       return login('user1', 'pass1')

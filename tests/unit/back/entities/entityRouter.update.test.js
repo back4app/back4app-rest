@@ -113,6 +113,14 @@ describe('entityRouter', function () {
       name: 'Monashees',
       investee: 20
     };
+
+    var lemannDoc = {
+      Entity: 'Investor',
+      _id: '00000000-0000-4000-a000-000000000444',
+      name: 'Fundação Lemann',
+      investee: 40
+    };
+
     var back4appDoc = {
       Entity: 'Startup',
       _id: '00000000-0000-4000-a000-000000000222',
@@ -122,16 +130,11 @@ describe('entityRouter', function () {
       employees: 4
     };
 
-    var defer = Promise.defer();
+    return Promise.all([
+      db.collection('Company').insertMany([gtacDoc, back4appDoc]),
+      db.collection('Investor').insertMany([monasheesDoc, lemannDoc])
+    ]);
 
-    db.collection('Company')
-      .insertMany([gtacDoc, back4appDoc])
-      .then(function () {
-        db.collection('Investor').insertOne(monasheesDoc);
-        defer.resolve();
-      });
-
-    return defer.promise;
   }
 
   function startAPI() {
@@ -207,6 +210,31 @@ describe('entityRouter', function () {
         });
     });
 
+    it('should update an Entity\'s instance that has id as an object' +
+        ' when it is an association', function () {
+      var updatedData = JSON.stringify({
+        owner: 'Davi Macedo',
+        fantasyName: 'back4app',
+        employees: 4,
+        investors: ['00000000-0000-4000-a000-000000000333',
+          '00000000-0000-4000-a000-000000000444']
+      });
+
+      var options = {
+        path: '/entities/Startup/00000000-0000-4000-a000-000000000222'
+      };
+
+      return update(updatedData, options)
+        .then(function (res) {
+          expect(res).to.have.property('id');
+          expect(res.owner).to.equal('Davi Macedo');
+          expect(res.fantasyName).to.equal('back4app');
+          expect(res.employees).to.equal(4);
+          expect(res.investors.length).to.equal(2);
+        });
+    });
+
+
     it('should update Entity specialization by superclass', function () {
       var postData = JSON.stringify({
         owner: 'Davi Macedo B4A'
@@ -221,7 +249,7 @@ describe('entityRouter', function () {
           expect(res.owner).to.equal('Davi Macedo B4A');
           expect(res.fantasyName).to.equal('back4app');
           expect(res.employees).to.equal(4);
-          expect(res.investors.length).to.equal(1);
+          expect(res.investors.length).to.equal(2);
         });
     });
 
@@ -248,7 +276,7 @@ describe('entityRouter', function () {
         name: 'Fundação Lemann'
       });
       var options = {
-        path: '/entities/Investor/00000000-0000-4000-a000-000000000444',
+        path: '/entities/Investor/00000000-0000-4000-a000-000000000555',
         status: 404
       };
 
