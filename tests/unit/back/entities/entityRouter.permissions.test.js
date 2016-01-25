@@ -6,6 +6,7 @@ var expect = require('chai').expect;
 var mongodb = require('mongodb');
 var express = require('express');
 var Promise = require('bluebird');
+var bcrypt = Promise.promisifyAll(require('bcryptjs'));
 var entity = require('@back4app/back4app-entity');
 var Entity = entity.models.Entity;
 
@@ -569,26 +570,24 @@ describe('entityRouter', function () {
   describe('UPDATE /:entity/:id', function () {
 
     beforeEach(function () {
-      return Promise.all([
-        db.collection('Post').insertMany([
-          {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
-            text: 'Written by user1', picture: true,
-            permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+      db.collection('Post').insertMany([
+        {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
+          text: 'Written by user1', picture: true,
+          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+            read: true,
+            write: true
+          }}
+        },
+        {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
+          text: 'Hello South America!', picture: false,
+          permissions: {
+            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
+            '*': {
               read: true,
               write: true
-            }}
-          },
-          {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
-            text: 'Hello South America!', picture: false,
-            permissions: {
-              '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
-              '*': {
-                read: true,
-                write: true
-              }
             }
           }
-        ])
+        }
       ]);
     });
 
@@ -719,13 +718,19 @@ describe('entityRouter', function () {
         .then(function (res) {
           expect(res.statusCode).to.be.equals(200);
           expect(res.json.id).to.be
-            .equals('7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c');
+              .equals('7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c');
           expect(res.json.username).to.be.equals('user1');
 
           // password must be stored as hash
-          var hashedPass = res.password;
+          var hashedPass = res.json.password;
           expect(hashedPass).to.not.be.equals('changedPassword');
-          expect(hashedPass).to.not.be.equals('pass1');
+
+          // promisified with bluebird
+          return bcrypt.compareAsync('changedPassword', hashedPass);
+        })
+        .then(function (res) {
+          // check password matches hash
+          expect(res).to.be.equals(true);
         });
     });
 

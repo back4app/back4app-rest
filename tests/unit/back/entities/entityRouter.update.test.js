@@ -101,10 +101,10 @@ describe('entityRouter', function () {
 
   function populateDatabase() {
     // mongodb documents
-    var gtacDoc = {
+    var companyDoc = {
       Entity: 'Company',
       _id: '00000000-0000-4000-a000-000000000111',
-      fantasyName: 'Gtac',
+      fantasyName: 'CompanyName',
       employees: 30
     };
     var monasheesDoc = {
@@ -117,21 +117,21 @@ describe('entityRouter', function () {
     var lemannDoc = {
       Entity: 'Investor',
       _id: '00000000-0000-4000-a000-000000000444',
-      name: 'Fundação Lemann',
+      name: 'Lemann Foundation',
       investee: 40
     };
 
-    var back4appDoc = {
+    var startupDoc = {
       Entity: 'Startup',
       _id: '00000000-0000-4000-a000-000000000222',
-      owner: 'Davi',
+      owner: 'Joao',
       investors: [monasheesDoc._id],
-      fantasyName: 'back4app',
-      employees: 4
+      fantasyName: 'startup',
+      employees: 10
     };
 
     return Promise.all([
-      db.collection('Company').insertMany([gtacDoc, back4appDoc]),
+      db.collection('Company').insertMany([companyDoc, startupDoc]),
       db.collection('Investor').insertMany([monasheesDoc, lemannDoc])
     ]);
 
@@ -184,38 +184,53 @@ describe('entityRouter', function () {
         path: '/entities/Company/00000000-0000-4000-a000-000000000111'
       };
 
+      var updatedPost = {
+        Entity: 'Company',
+        id: '00000000-0000-4000-a000-000000000111',
+        fantasyName: 'CompanyName',
+        employees: 40,
+        permissions: null
+      };
+
       return update(postData, options)
         .then(function (res) {
-          expect(res).to.have.property('id');
-          expect(res.fantasyName).to.equal('Gtac');
-          expect(res.employees).to.equal(40);
+          expect(res).to.be.deep.equals(updatedPost);
         });
     });
 
     it('should update Entity specialization by itself', function () {
       var postData = JSON.stringify({
-        owner: 'Davi Macedo'
+        owner: 'Joao Paulo'
       });
       var options = {
         path: '/entities/Startup/00000000-0000-4000-a000-000000000222'
       };
 
+      var updatedPost = {
+        Entity: 'Startup',
+        id: '00000000-0000-4000-a000-000000000222',
+        owner: 'Joao Paulo',
+        investors: [{
+          'Entity': 'Investor',
+          'id': '00000000-0000-4000-a000-000000000333'
+        }],
+        fantasyName: 'startup',
+        employees: 10,
+        permissions: null
+      };
+
       return update(postData, options)
         .then(function (res) {
-          expect(res).to.have.property('id');
-          expect(res.owner).to.equal('Davi Macedo');
-          expect(res.fantasyName).to.equal('back4app');
-          expect(res.employees).to.equal(4);
-          expect(res.investors.length).to.equal(1);
+          expect(res).to.be.deep.equals(updatedPost);
         });
     });
 
     it('should update an Entity\'s instance that has id as an object' +
         ' when it is an association', function () {
       var updatedData = JSON.stringify({
-        owner: 'Davi Macedo',
-        fantasyName: 'back4app',
-        employees: 4,
+        owner: 'Joao Paulo',
+        fantasyName: 'startup',
+        employees: 10,
         investors: ['00000000-0000-4000-a000-000000000333',
           '00000000-0000-4000-a000-000000000444']
       });
@@ -224,38 +239,65 @@ describe('entityRouter', function () {
         path: '/entities/Startup/00000000-0000-4000-a000-000000000222'
       };
 
+      var updatedPost = {
+        Entity: 'Startup',
+        id: '00000000-0000-4000-a000-000000000222',
+        owner: 'Joao Paulo',
+        investors: [
+          {
+            'Entity': 'Investor',
+            'id': '00000000-0000-4000-a000-000000000333'
+          },
+          {
+            'Entity': 'Investor',
+            'id': '00000000-0000-4000-a000-000000000444'
+          }],
+        fantasyName: 'startup',
+        employees: 10,
+        permissions: null
+      };
+
       return update(updatedData, options)
         .then(function (res) {
-          expect(res).to.have.property('id');
-          expect(res.owner).to.equal('Davi Macedo');
-          expect(res.fantasyName).to.equal('back4app');
-          expect(res.employees).to.equal(4);
-          expect(res.investors.length).to.equal(2);
+          expect(res).to.be.deep.equals(updatedPost);
         });
     });
 
-
     it('should update Entity specialization by superclass', function () {
       var postData = JSON.stringify({
-        owner: 'Davi Macedo B4A'
+        owner: 'Joao Paulo Silva'
       });
       var options = {
         path: '/entities/Company/00000000-0000-4000-a000-000000000222'
       };
 
+      var updatedPost = {
+        Entity: 'Startup',
+        id: '00000000-0000-4000-a000-000000000222',
+        owner: 'Joao Paulo Silva',
+        investors: [
+          {
+            'Entity': 'Investor',
+            'id': '00000000-0000-4000-a000-000000000333'
+          },
+          {
+            'Entity': 'Investor',
+            'id': '00000000-0000-4000-a000-000000000444'
+          }],
+        fantasyName: 'startup',
+        employees: 10,
+        permissions: null
+      };
+
       return update(postData, options)
         .then(function (res) {
-          expect(res).to.have.property('id');
-          expect(res.owner).to.equal('Davi Macedo B4A');
-          expect(res.fantasyName).to.equal('back4app');
-          expect(res.employees).to.equal(4);
-          expect(res.investors.length).to.equal(2);
+          expect(res).to.be.deep.equals(updatedPost);
         });
     });
 
     it('should return 404 code on wrong entity', function () {
       var postData = JSON.stringify({
-        owner: 'Davi Macedo B4A'
+        owner: 'Joao Paulo Silva'
       });
       var options = {
         path: '/entities/WrongEntity/00000000-0000-4000-a000-000000000222',
@@ -273,7 +315,7 @@ describe('entityRouter', function () {
 
     it('should return 404 code on wrong id', function () {
       var postData = JSON.stringify({
-        name: 'Fundação Lemann'
+        name: 'Lemann Foundation'
       });
       var options = {
         path: '/entities/Investor/00000000-0000-4000-a000-000000000555',
