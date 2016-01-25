@@ -6,6 +6,7 @@ var expect = require('chai').expect;
 var mongodb = require('mongodb');
 var express = require('express');
 var Promise = require('bluebird');
+var bcrypt = Promise.promisifyAll(require('bcryptjs'));
 var entity = require('@back4app/back4app-entity');
 var Entity = entity.models.Entity;
 
@@ -215,13 +216,14 @@ describe('entityRouter', function () {
   };
 
   var post2 = {
-    id: '924f8e4c-56f1-4eb9-b3b5-f299ded65e9d',
-    Entity: 'Post', text: 'Hello NodeJS!', picture: false, permissions: null
+    id: '924f8e4c-56f1-4eb9-b3b5-f299ded65e9d', Entity: 'Post',
+    text: 'Hello NodeJS!', picture: false, permissions: null
   };
 
   var post3 = {
     id: '15358f84-cc88-4147-8f85-9c09cdad9cf7', Entity: 'Post',
-    text: 'Hello AngularJS!', picture: false, permissions: {'*': {read: true}}
+    text: 'Hello AngularJS!', picture: false,
+    permissions: {'*': {read: true}}
   };
 
   //Accounts
@@ -323,8 +325,8 @@ describe('entityRouter', function () {
         {Entity: 'Account', _id: 'c94d55cc-013c-4359-bc48-6b6839220f00',
           name: 'Account2',
           permissions: {
-            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c':
-            {read: true}, '*': {write: true}
+            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {read: true},
+            '*': {write: true}
           }
         },
         {Entity: 'Account', _id: '827b625a-80ed-4f35-b843-12958fdafa81',
@@ -568,25 +570,25 @@ describe('entityRouter', function () {
   describe('UPDATE /:entity/:id', function () {
 
     beforeEach(function () {
-      return db.collection('Post').insertMany([
-          {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
-            text: 'Written by user1', picture: true,
-            permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+      db.collection('Post').insertMany([
+        {Entity: 'Post', _id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
+          text: 'Written by user1', picture: true,
+          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+            read: true,
+            write: true
+          }}
+        },
+        {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
+          text: 'Hello South America!', picture: false,
+          permissions: {
+            '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
+            '*': {
               read: true,
               write: true
-            }}
-          },
-          {Entity: 'Post', _id: 'e5d30ee6-156a-4710-b6e9-891fd19d02c0',
-            text: 'Hello South America!', picture: false,
-            permissions: {
-              '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {},
-              '*': {
-                read: true,
-                write: true
-              }
             }
           }
-        ]);
+        }
+      ]);
     });
 
     it('should update Entity because this user has permission', function () {
@@ -700,6 +702,73 @@ describe('entityRouter', function () {
             });
           });
       });
+
+    it('should update User\'s password', function () {
+      var updatedData = JSON.stringify({
+        password: 'changedPassword'
+      });
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/User/7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c';
+          return update(updatedData, url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json.id).to.be
+              .equals('7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c');
+          expect(res.json.username).to.be.equals('user1');
+
+          // password must be stored as hash
+          var hashedPass = res.json.password;
+          expect(hashedPass).to.not.be.equals('changedPassword');
+
+          // promisified with bluebird
+          return bcrypt.compareAsync('changedPassword', hashedPass);
+        })
+        .then(function (res) {
+          // check password matches hash
+          expect(res).to.be.equals(true);
+        });
+    });
+
+    it('should update Entity\'s instance permission', function () {
+      var updatedData = JSON.stringify({
+        text: 'Written by user1', picture: true,
+        permissions: {
+          '7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+            read: true,
+            write: true
+          },
+          '*': {read: true}
+        }
+      });
+
+      var updatedPost =
+      {Entity: 'Post', id: 'fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d',
+          text: 'Written by user1', picture: true,
+          permissions: {'7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c': {
+            read: true,
+            write: true
+          },
+            '*': {read: true}
+          }
+      };
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/Post/fb23fd0c-3553-4e3b-b8ea-fa0d6b04de9d';
+          return update(updatedData, url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json).to.be.deep.equals(updatedPost);
+        });
+    });
   });
 
   describe('DELETE /entity/:id', function () {

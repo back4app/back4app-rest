@@ -347,11 +347,45 @@ function updateEntity(entities) {
         _replaceAssociationInAttributes(Entity, entity);
 
         // validate entity
-        entity.validate();
+        try {
+          entity.validate();
+        } catch (e) {
+          res.status(400).json({
+            code: 103,
+            error: 'Invalid Entity'
+          });
+          return;
+        }
 
-        return entity.save().then(function () {
-          res.status(200).json(_objectToDocument(entity));
-        });
+        //hash password if changed
+        _replacePasswordInUser(entity, entityName)
+          .then(function (entity) {
+            entity.save().then(function () {
+              _replacePermissionsInUser(entity, entityName)
+                .then(function (entity) {
+                  res.status(200).json(_objectToDocument(entity));
+                })
+                .catch(function (err) {
+                  if (err instanceof QueryError) {
+                    res.status(404).json({
+                      code: 123,
+                      error: 'Object Not Found'
+                    });
+                  } else if (err instanceof ValidationError) {
+                    res.status(400).json({
+                      code: 103,
+                      error: 'Invalid Entity'
+                    });
+                  } else {
+                    // error not treated
+                    res.status(500).json({
+                      code: 1,
+                      error: 'Internal Server Error'
+                    });
+                  }
+                });
+            });
+          });
       } else {
         res.status(403).json({
           code: 118,
