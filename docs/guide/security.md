@@ -51,7 +51,7 @@ The created user will be returned on the response:
 }
 ```
 
-All users are created by default with permissions that only allow access from itself.
+All users are created by default with permissions that only allow access for itself.
 
 
 ## Logging In
@@ -106,7 +106,7 @@ The result is a success response with an empty JSON:
 
 ## Defining Permissions
 
-In order to define permissions on an entity, the `permissions` attribute must the set. For example, to create an entity with read and write access to one user:
+In order to define permissions on an entity, the `permissions` attribute must be set. For example, to create an entity with read and write access to one user:
 
 ```http
 POST /entities/Book/
