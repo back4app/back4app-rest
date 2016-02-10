@@ -115,37 +115,45 @@ function postEntity(entities) {
       return;
     }
 
-    // replace password with entity is a User
-    _replacePasswordInUser(entity, entityName)
-      .then(function (entity) {
-        entity.save()
-          .then(function () {
-            // handle special User's permissions
-            _replacePermissionsInUser(entity, entityName)
-              .then(function (entity) {
-                // return created entity
-                res.status(201).json(_objectToDocument(entity));
-              })
-              .catch(function () {
-                res.status(500).json({
-                  code: 1,
-                  error: 'Internal Server Error'
+    _checkDuplicatedUsername(entity, entityName).then(function () {
+      // replace password with entity is a User
+      _replacePasswordInUser(entity, entityName)
+        .then(function (entity) {
+          entity.save()
+            .then(function () {
+              // handle special User's permissions
+              _replacePermissionsInUser(entity, entityName)
+                .then(function (entity) {
+                  // return created entity
+                  res.status(201).json(_objectToDocument(entity));
+                })
+                .catch(function () {
+                  res.status(500).json({
+                    code: 1,
+                    error: 'Internal Server Error'
+                  });
                 });
+            })
+            .catch(function () {
+              res.status(200).json({
+                code: 103,
+                error: 'Invalid Entity'
               });
-          })
-          .catch(function () {
-            res.status(400).json({
-              code: 103,
-              error: 'Invalid Entity'
             });
+        })
+        .catch(function () {
+          res.status(500).json({
+            code: 1,
+            error: 'Internal Server Error'
           });
-      })
-      .catch(function () {
-        res.status(500).json({
-          code: 1,
-          error: 'Internal Server Error'
         });
+    })
+    .catch(function () {
+      res.status(400).json({
+        code: 104,
+        error: 'Duplicated Entity'
       });
+    });
   };
 }
 
@@ -357,35 +365,42 @@ function updateEntity(entities) {
           return;
         }
 
-        //hash password if changed
-        _replacePasswordInUser(entity, entityName)
-          .then(function (entity) {
-            entity.save().then(function () {
-              _replacePermissionsInUser(entity, entityName)
-                .then(function (entity) {
-                  res.status(200).json(_objectToDocument(entity));
-                })
-                .catch(function (err) {
-                  if (err instanceof QueryError) {
-                    res.status(404).json({
-                      code: 123,
-                      error: 'Object Not Found'
-                    });
-                  } else if (err instanceof ValidationError) {
-                    res.status(400).json({
-                      code: 103,
-                      error: 'Invalid Entity'
-                    });
-                  } else {
-                    // error not treated
-                    res.status(500).json({
-                      code: 1,
-                      error: 'Internal Server Error'
-                    });
-                  }
-                });
+        _checkDuplicatedUsername(entity, entityName).then(function () {
+          //hash password if changed
+          _replacePasswordInUser(entity, entityName)
+            .then(function (entity) {
+              entity.save().then(function () {
+                _replacePermissionsInUser(entity, entityName)
+                  .then(function (entity) {
+                    res.status(200).json(_objectToDocument(entity));
+                  })
+                  .catch(function (err) {
+                    if (err instanceof QueryError) {
+                      res.status(404).json({
+                        code: 123,
+                        error: 'Object Not Found'
+                      });
+                    } else if (err instanceof ValidationError) {
+                      res.status(400).json({
+                        code: 103,
+                        error: 'Invalid Entity'
+                      });
+                    } else {
+                      // error not treated
+                      res.status(500).json({
+                        code: 1,
+                        error: 'Internal Server Error'
+                      });
+                    }
+                  });
+              });
             });
+        }).catch(function () {
+          res.status(400).json({
+            code: 104,
+            error: 'Duplicated Entity'
           });
+        });
       } else {
         res.status(403).json({
           code: 118,
@@ -570,6 +585,32 @@ function _replacePermissionsInUser(entity, entityName) {
       .catch(function (err) {
         reject(err);
       });
+  });
+}
+
+function _checkDuplicatedUsername(entity, entityName) {
+  return new Promise(function (resolve, reject) {
+    // only change users
+    if (entityName !== 'User') {
+      resolve();
+      return;
+    }
+
+    var orArray = [
+      {username: entity.username}];
+    if (entity.email) {
+      orArray.push({'email': entity.email});
+    }
+
+    // searches for other occurrences
+    User.find({'$or': orArray,
+      '_id': {'$ne': entity.id} }).then(function (result) {
+      if (result.length > 0) {
+        reject('Duplicated Entity');
+      } else {
+        resolve();
+      }
+    }).catch(reject);
   });
 }
 

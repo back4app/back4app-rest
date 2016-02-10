@@ -218,7 +218,7 @@ describe('entityRouter', function () {
 
     it('should create User with correct permissions', function () {
       var postData = JSON.stringify({
-        username: 'user1',
+        username: 'user2',
         password: 'pass1'
       });
 
@@ -230,6 +230,57 @@ describe('entityRouter', function () {
           expect(res.permissions).to.be.deep.equals(permissions);
         });
     });
+
+    it('should not create duplicated User (username)', function () {
+      var postData = JSON.stringify({
+        username: 'user_dup',
+        password: 'pass'
+      });
+
+      return post(postData, {path: '/entities/User/'})
+        .then(function () {
+          return post(postData, {
+            path: '/entities/User/',
+            status: 400
+          });
+        })
+        .then(function (res) {
+          var error = {
+            code: 104,
+            error: 'Duplicated Entity'
+          };
+          expect(res).to.be.deep.equals(error);
+        });
+    });
+
+    it('should not create duplicated User (email)', function () {
+      var postData = JSON.stringify({
+        username: 'user_dup1',
+        email: 'user_dup@email.com',
+        password: 'pass'
+      });
+
+      return post(postData, {path: '/entities/User/'})
+        .then(function () {
+          postData = JSON.stringify({
+            username: 'user_dup2',
+            email: 'user_dup@email.com',
+            password: 'pass'
+          });
+          return post(postData, {
+            path: '/entities/User/',
+            status: 400
+          });
+        })
+        .then(function (res) {
+          var error = {
+            code: 104,
+            error: 'Duplicated Entity'
+          };
+          expect(res).to.be.deep.equals(error);
+        });
+    });
+
   });
 
   it('should create an Entity\'s instance', function () {
