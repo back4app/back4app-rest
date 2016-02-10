@@ -238,7 +238,7 @@ describe('entityRouter', function () {
       });
 
       return post(postData, {path: '/entities/User/'})
-        .then(function (res) {
+        .then(function () {
           return post(postData, {
             path: '/entities/User/',
             status: 400
@@ -261,7 +261,7 @@ describe('entityRouter', function () {
       });
 
       return post(postData, {path: '/entities/User/'})
-        .then(function (res) {
+        .then(function () {
           postData = JSON.stringify({
             username: 'user_dup2',
             email: 'user_dup@email.com',

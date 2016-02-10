@@ -788,7 +788,7 @@ describe('entityRouter', function () {
             .equals('7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c');
           expect(res.json.username).to.be.equals('user1');
 
-          return login('user2', 'pass2')
+          return login('user2', 'pass2');
         })
         .then(function (res) {
           return res.json.sessionToken;
@@ -804,7 +804,7 @@ describe('entityRouter', function () {
             error: 'Duplicated Entry'
           };
           expect(res.json).to.be.deep.equals(error);
-        })
+        });
     });
 
   });

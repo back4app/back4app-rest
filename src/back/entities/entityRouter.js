@@ -148,7 +148,7 @@ function postEntity(entities) {
           });
         });
     })
-    .catch(function (err) {
+    .catch(function () {
       res.status(400).json({
         code: 104,
         error: 'Duplicated Entry'
@@ -395,7 +395,7 @@ function updateEntity(entities) {
                   });
               });
             });
-        }).catch(function (err) {
+        }).catch(function () {
           res.status(400).json({
             code: 104,
             error: 'Duplicated Entry'
