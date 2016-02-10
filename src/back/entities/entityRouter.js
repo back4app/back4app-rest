@@ -148,10 +148,10 @@ function postEntity(entities) {
           });
         });
     })
-    .catch(function () {
-      res.status(404).json({
-        code: 123,
-        error: 'Object Not Found'
+    .catch(function (err) {
+      res.status(400).json({
+        code: 104,
+        error: 'Duplicated Entry'
       });
     });
   };
@@ -396,7 +396,6 @@ function updateEntity(entities) {
               });
             });
         }).catch(function (err) {
-          console.log(err);
           res.status(400).json({
             code: 104,
             error: 'Duplicated Entry'
@@ -593,7 +592,6 @@ function _checkDuplicatedUsername(entity, entityName) {
   return new Promise(function (resolve, reject) {
     // only change users
     if (entityName !== 'User') {
-      console.log('cccc');
       resolve();
       return;
     }
@@ -608,14 +606,11 @@ function _checkDuplicatedUsername(entity, entityName) {
     User.find({'$or': orArray,
       '_id': {'$ne': entity.id} }).then(function (result) {
       if (result.length > 0) {
-        console.log('aaaaaa\n', result, '\naa\n', entity);
         reject('Duplicated Entry');
       } else {
         resolve();
       }
-    }).catch(function (err) {
-      console.log('bbbbb', err);
-    });
+    }).catch(reject);
   });
 }
 

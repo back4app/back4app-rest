@@ -769,6 +769,44 @@ describe('entityRouter', function () {
           expect(res.json).to.be.deep.equals(updatedPost);
         });
     });
+
+    it('should not update User\'s email if duplicated', function () {
+      var updatedData = JSON.stringify({
+        email: 'email@email.com'
+      });
+      return login('user1', 'pass1')
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/User/7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c';
+          return update(updatedData, url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(200);
+          expect(res.json.id).to.be
+            .equals('7184c4b9-d8e6-41f6-bc89-ae2ebd1d280c');
+          expect(res.json.username).to.be.equals('user1');
+
+          return login('user2', 'pass2')
+        })
+        .then(function (res) {
+          return res.json.sessionToken;
+        })
+        .then(function (sessionToken) {
+          var url = '/entities/User/2a91cb40-4344-43b0-899f-ec429e3ad384';
+          return update(updatedData, url, {sessionToken: sessionToken});
+        })
+        .then(function (res) {
+          expect(res.statusCode).to.be.equals(400);
+          var error = {
+            code: 104,
+            error: 'Duplicated Entry'
+          };
+          expect(res.json).to.be.deep.equals(error);
+        })
+    });
+
   });
 
   describe('DELETE /entity/:id', function () {
