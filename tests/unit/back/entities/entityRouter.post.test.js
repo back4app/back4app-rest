@@ -218,7 +218,7 @@ describe('entityRouter', function () {
 
     it('should create User with correct permissions', function () {
       var postData = JSON.stringify({
-        username: 'user1',
+        username: 'user2',
         password: 'pass1'
       });
 
