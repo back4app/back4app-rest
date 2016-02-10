@@ -801,7 +801,7 @@ describe('entityRouter', function () {
           expect(res.statusCode).to.be.equals(400);
           var error = {
             code: 104,
-            error: 'Duplicated Entry'
+            error: 'Duplicated Entity'
           };
           expect(res.json).to.be.deep.equals(error);
         });

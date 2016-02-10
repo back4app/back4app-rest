@@ -247,7 +247,7 @@ describe('entityRouter', function () {
         .then(function (res) {
           var error = {
             code: 104,
-            error: 'Duplicated Entry'
+            error: 'Duplicated Entity'
           };
           expect(res).to.be.deep.equals(error);
         });
@@ -275,7 +275,7 @@ describe('entityRouter', function () {
         .then(function (res) {
           var error = {
             code: 104,
-            error: 'Duplicated Entry'
+            error: 'Duplicated Entity'
           };
           expect(res).to.be.deep.equals(error);
         });

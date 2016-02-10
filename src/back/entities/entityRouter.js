@@ -151,7 +151,7 @@ function postEntity(entities) {
     .catch(function () {
       res.status(400).json({
         code: 104,
-        error: 'Duplicated Entry'
+        error: 'Duplicated Entity'
       });
     });
   };
@@ -398,7 +398,7 @@ function updateEntity(entities) {
         }).catch(function () {
           res.status(400).json({
             code: 104,
-            error: 'Duplicated Entry'
+            error: 'Duplicated Entity'
           });
         });
       } else {
@@ -597,16 +597,16 @@ function _checkDuplicatedUsername(entity, entityName) {
     }
 
     var orArray = [
-      {'username': entity.username}];
+      {username: entity.username}];
     if (entity.email) {
       orArray.push({'email': entity.email});
     }
 
-    // searchs for other occurrences
+    // searches for other occurrences
     User.find({'$or': orArray,
       '_id': {'$ne': entity.id} }).then(function (result) {
       if (result.length > 0) {
-        reject('Duplicated Entry');
+        reject('Duplicated Entity');
       } else {
         resolve();
       }
